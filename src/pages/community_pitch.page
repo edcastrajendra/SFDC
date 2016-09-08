@@ -1,0 +1,269 @@
+<apex:page standardStylesheets="false" sidebar="false" controller="PitchController" action="{!getCommunityVideoList}"> 
+<html xmlns="https://www.w3.org/2000/svg" xmlns:xlink="https://www.w3.org/1999/xlink">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="stylesheet" href="{!URLFOR($Resource.Assets_SU,'bootstrap/css/bootstrap.css')}"/>
+    <link rel="stylesheet" href="{!URLFOR($Resource.fa,'fa/css/font-awesome.min.css')}"/>
+    <link rel="stylesheet" href="{!URLFOR($Resource.Assets_SU,'Styles/main-css.css')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.Assets_SU,'js/jquery.min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.Assets_SU,'js/jquery-ui.min.js')}" />
+    <c:script_component ></c:script_component>
+    <title>Perfect The Pitch</title>
+    <style>
+        .cls-list-div{
+            position:absolute;
+            background-color:#0f7be4;
+            height: 125px;
+            width: 150px;
+            font-size: 13px;
+            top: 30px;
+            left: 43px;
+            z-index: 1;
+            display:none;
+        }
+        .cls-my-view-div{
+           position:absolute;
+           background-color:#0f7be4;
+           height: 65px;
+           width: 150px;
+           font-size: 13px;
+           text-align: left;
+           top: 30px;
+           right: 15px;
+           z-index: 1;
+           display:none;
+        }
+       
+    </style>
+    </head>
+<body>
+    <div class="col-sm-12 col-xs-12" style="padding:0">
+        <apex:form >
+       	  <div class="header-section" id="header">
+              <div class="cls-header-first-div">
+                  <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                      <div style="max-width:390px;margin: 0 auto;">
+                          <label class="cls-label-search">
+                              <div class="cls-search-label-div">
+                                  <img src="{!URLFOR($Resource.Assets_SU,'Assets/search.png')}" style="" />
+                                  <span style="font-weight: 100;" class="change-search-option">Search Pitch</span>
+                                  <span class="fa fa-chevron-down" onclick="searchOption();" style="padding-left: 5px;cursor:pointer"></span>
+                              </div>
+                               <input class="cls-search-input-sfdc" name="search" type="text" />
+                                       <input class="cls-demo-search-input-sfdc" name="search" type="text"/>
+                              <div class="cls-label-search-pop-div">
+                                  <div style="padding:10px 5px;border-bottom: 1px solid #ccc;cursor: pointer;">
+                                      <img src="{!URLFOR($Resource.vrp,'Assets/serchradio_icon.png')}" />
+                                      <span style="color: #888888;padding-left: 5px;font-weight: 100;" id="search-pitch">Search Pitch</span>
+                                  </div>
+                                  <div style="padding:10px 5px;    cursor: pointer;">
+                                      <img src="{!URLFOR($Resource.vrp,'Assets/serchradio_icon.png')}" />
+                                      <span style="color: #888888;padding-left: 5px;font-weight: 100;" id="search-demo">Search Demo</span>
+                                  </div>
+                              </div>
+                          </label>
+                      </div>
+                      <div class="" style="position: absolute;right: 15px;top: 2px;cursor: pointer;">
+                          <img src="{!URLFOR($Resource.Assets_SU,'Assets/01.png')}" style="height: 25px;" />
+                      </div>
+                  </div>
+              </div>
+              <div class="header-second col-sm-12 col-xs-12">
+                    <div class="col-lg-9 col-md-9 col-sm-9 col-xs-9">
+                        <div class="site-map" style="display: inline-block;padding: 5px 20px 0px 0;float: left;">
+                          <span style="padding: 5px 0;float: left;border-bottom: 1px solid #0f7be4;color:#0f7be4;">Perfect The Pitch</span>
+                        </div>
+                        <div class="site-map" style="display: inline-block;padding: 5px 20px 0px 0;float: left;">
+                          <apex:commandLink action="{!getPerfectTheDemo}" value="">
+                                <span style="padding: 5px 0;float: left;color:#888888;">Perfect The Demo</span>
+                         </apex:commandLink>   
+                        </div>
+                    </div>
+                </div>
+          </div>
+        </apex:form>
+          <div class="col-sm-12 col-xs-12 cls-product-training-div" style="display:block;">
+              <apex:form >
+                  <div class="col-sm-12 col-xs-12" style="">
+                  <div class="col-sm-6 col-xs-6" style="display:inline-block;">
+                      <span style=" display: inline-block;background-color: #0f7be4;color: #fff;border-radius: 50%;width: 25px;height: 25px;">
+                          <span aria-hidden="true" class="fa fa-filter" style="text-align: center;margin: 5px 6px;font-size: 16px;"></span>
+                      </span>
+                      <span>Filter</span>
+                      <a href="javascript:getList();">
+                      <span aria-hidden="true" class="fa fa-caret-down" style="color:#0f7be4;font-size: 18px; vertical-align: middle;"></span>
+                      </a>    
+                      <div class="cls-list-div">
+                          <p style="padding: 5px 10px 6px;color: #fff;border-bottom: 1px solid #fff;">Date Added</p>
+                          <p style="padding: 5px 10px 6px;color: #fff;border-bottom: 1px solid #fff;">Highly Rated</p>
+                          <p style="padding: 5px 10px 6px;color: #fff;border-bottom: 1px solid #fff;">Max Commented</p>
+                          <p style="padding: 5px 10px 6px;color: #fff;">Video Name</p>
+                      </div>
+                  </div>
+                  <div class="col-sm-6 col-xs-6" style="display:inline-block;text-align: right;">
+                      <apex:outputPanel rendered="{!myView}">
+                      <span style="color:#0f7be4;">My view</span>
+                      </apex:outputPanel>
+                      <apex:outputPanel rendered="{!communityView}">
+                      <span style="color:#0f7be4;">Community view</span>
+                      </apex:outputPanel>
+                      <a href="javascript:getMyView();">
+                      <span aria-hidden="true" class="fa fa-caret-down" style="color:#0f7be4;font-size: 18px; vertical-align: middle;"></span>
+                      </a>    
+                      <div class="cls-my-view-div">
+                          <apex:commandLink action="{!getVideoList}" value="">
+                          <p class="cls-my-view-option" style="padding: 5px 10px 6px;color: #fff;border-bottom: 1px solid #fff;">My View</p> 
+                          </apex:commandLink> 
+                          <apex:commandLink action="{!getCommunityVideoList}" value="">
+                          <p class="cls-community-view-option" style="padding: 5px 10px 6px;color: #fff;">Community View</p>
+                          </apex:commandLink>    
+                      </div>
+                  </div>
+              </div>
+              <div class="col-sm-12 col-xs-12" style="padding:15px;">
+                  <apex:repeat value="{!dto.message.speech}" var="speech">
+                   <div class="col-sm-4 col-xs-4 col-lg-3" style="display:inline-block;padding: 15px;">
+                      <div class="col-sm-12 col-xs-12" style="padding:10px 10px 0;display:inline-block;box-shadow: -2px 2px 5px #d9d9d9;background-color: #fafafa;border: 1px solid #e0e0e0;">
+                      	 <div class="col-sm-12 col-xs-12" style="padding: 0 0 5px;">
+                           <span style="font-size: 13px;font-weight:bold;white-space: nowrap;text-overflow: ellipsis;overflow: hidden;display: block;">{!speech.title}</span>
+                         </div>
+                         <div class="col-sm-12 col-xs-12" style="padding:0;">
+                              <img class="col-sm-12 col-xs-12" style="padding:0;max-height:150px;" src="{!speech.thumb_url}"/>
+                              <apex:commandLink action="{!getCommunityPitchVideoInfo}" value="">
+                              <apex:param id="video_id" name="video_id" assignTo="{!video_id}" value="{!speech.video_id}"/>   
+                               <apex:param id="speech_id" name="speech_id" assignTo="{!speech_id}" value="{!speech.speech_id}"/> 
+                               <apex:param id="rating" name="rating" assignTo="{!rating}" value="{!speech.rating}"/> 
+                              <img class="img-responsive" style="display:block;position:absolute;left: 50%;top: 50%;transform: translate(-50%,-50%);width: 20%;" src="{!URLFOR($Resource.Assets_SU,'Assets/video_play_btn.png')}"/>
+                             </apex:commandLink>
+                            </div>
+                           <div style="float:left;width:100%;padding:5px 0;">
+                              <div class="" style="padding: 0px;float: left;">
+                                 <div style="display:inline-block;font-size: 11px;">
+                                   <apex:outputLabel rendered="{!speech.rating == '5.0'}">
+                                                 <span class="star" style="color:#0f7be4;"></span>
+                                                 <span class="star" style="color:#0f7be4;"></span>
+                                                 <span class="star" style="color:#0f7be4;"></span>
+                                                 <span class="star" style="color:#0f7be4;"></span>
+                                                 <span class="star" style="color:#0f7be4;"></span>   
+                                  </apex:outputLabel>
+                                   <apex:outputLabel rendered="{!speech.rating == '4.0'}">
+                                                 <span class="star" style="color:#0f7be4;"></span>
+                                                 <span class="star" style="color:#0f7be4;"></span>
+                                                 <span class="star" style="color:#0f7be4;"></span>
+                                                 <span class="star" style="color:#0f7be4;"></span>
+                                                 <span class="star" style="color:#6e6a6a;"></span>   
+                                                </apex:outputLabel>
+                                                <apex:outputLabel rendered="{!speech.rating == '3.0'}">
+                                                 <span class="star" style="color:#0f7be4;"></span>
+                                                 <span class="star" style="color:#0f7be4;"></span>
+                                                 <span class="star" style="color:#0f7be4;"></span>
+                                                 <span class="star" style="color:#6e6a6a;"></span>
+                                                 <span class="star" style="color:#6e6a6a;"></span>   
+                                                </apex:outputLabel>
+                                                <apex:outputLabel rendered="{!speech.rating == '2.0'}">
+                                                 <span class="star" style="color:#0f7be4;"></span>
+                                                 <span class="star" style="color:#0f7be4;"></span>
+                                                 <span class="star" style="color:#6e6a6a;"></span>
+                                                 <span class="star" style="color:#6e6a6a;"></span>
+                                                 <span class="star" style="color:#6e6a6a;"></span>   
+                                                </apex:outputLabel>
+                                                <apex:outputLabel rendered="{!speech.rating == '1.0'}">
+                                                 <span class="star" style="color:#0f7be4;"></span>
+                                                 <span class="star" style="color:#6e6a6a;"></span>
+                                                 <span class="star" style="color:#6e6a6a;"></span>
+                                                 <span class="star" style="color:#6e6a6a;"></span>
+                                                 <span class="star" style="color:#6e6a6a;"></span>   
+                                                </apex:outputLabel>
+                                 </div>
+                              </div>
+                               <div style="float:right;padding: 2px;">
+                                 <span style="color:#888888;text-align:right;font-size: 12px;">{!speech.comments}
+                                      <span class="fa fa-commenting-o" aria-hidden="true" style="font-size: 14px;"></span>
+                                  </span>
+                                  <span style="color:#888888;text-align:right;font-size: 12px;">1000 
+                                      <span class="fa fa-eye" aria-hidden="true" style="font-size: 14px;"></span>
+                                  </span>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+                  </apex:repeat>
+              </div>
+              </apex:form>
+          </div>
+          <apex:form >
+         <div class="col-sm-12 col-xs-12 cls-video-list-div" style="display:none;">
+                    <div class="col-sm-12 col-xs-12" style="">
+                      <div class="col-sm-6 col-xs-6" style="display:inline-block;">
+                      <span style=" display: inline-block;background-color: #0f7be4;color: #fff;border-radius: 50%;width: 25px;height: 25px;">
+                          <span aria-hidden="true" class="fa fa-filter" style="text-align: center;margin: 5px 6px;font-size: 16px;"></span>
+                      </span>
+                      <span>Filter</span>
+                      <span aria-hidden="true" class="fa fa-caret-down" onclick="getList();" style="color:#0f7be4;font-size: 18px; vertical-align: middle;cursor: pointer;"></span>
+                      <div class="cls-list-div" style="display:none;position:absolute;background-color:#0f7be4;height: 125px;width: 150px;font-size: 13px;top: 30px;left: 43px;z-index: 1;">
+                          <p style="padding: 5px 10px 6px;color: #fff;border-bottom: 1px solid #fff;">Date Added</p>
+                          <p style="padding: 5px 10px 6px;color: #fff;border-bottom: 1px solid #fff;">Highly Rated</p>
+                          <p style="padding: 5px 10px 6px;color: #fff;border-bottom: 1px solid #fff;">Max Commented</p>
+                          <p style="padding: 5px 10px 6px;color: #fff;">Video Name</p>
+                      </div>
+                  </div>
+                  <div class="col-sm-6 col-xs-6" style="display:inline-block;text-align: right;">
+                      <img src="{!URLFOR($Resource.vrp,'Assets/demo_user.png')}" width="25"/>
+                      <span style="color:#0f7be4;">My view</span>
+                       <span aria-hidden="true" class="fa fa-caret-down" onclick="getMyView();" style="color:#0f7be4;font-size: 18px; vertical-align: middle;cursor: pointer;"></span>
+                      <div class="cls-my-view-div" style="display:none;position:absolute;background-color:#0f7be4;height: 65px;width: 150px;font-size: 13px;text-align: left;top: 30px;right: 15px;z-index: 1;">
+                          <p style="padding: 5px 10px 6px;color: #fff;border-bottom: 1px solid #fff;">My View</p> 
+                          <p style="padding: 5px 10px 6px;color: #fff;">Community View</p>
+                      </div>
+                  </div>
+              </div>
+              <div class="col-sm-12 col-xs-12" style="padding:15px;" id="result">
+              </div>
+            </div> 
+          <apex:actionFunction name="searchVideoInfo" action="{!searchVideoInfo}" reRender="resultPanel" status="myStatus">
+          <apex:param name="video_id" assignTo="{!video_id}" value="" />
+          <apex:param name="speech_id" assignTo="{!speech_id}" value="" />    
+          </apex:actionFunction>
+        </apex:form>
+          <div class="footer" id="footer">
+              <div class="row">
+                  <div class="col-lg-1 col-md-1 col-xs-1 col-sm-1" id="sales_uni_logo">
+                      <img src="{!URLFOR($Resource.Assets_SU,'Assets/SU.png')}" height="45"/>
+                  </div>
+                  <div class="col-lg-10 col-md-10 col-xs-10 col-sm-10" id="progress_bar">
+                      <span style="display:block;width:50%;text-align:right;font-size: 10px;font-weight: bold;">50%</span>
+                      <div class="progress-container round-xlarge">
+                          <div class="progressbar round-xlarge" style="width:50%"></div>
+                          <div class="profile-pic" style="margin-left:10px">
+                              <img src="{!URLFOR($Resource.Assets_SU,'Images/dp1.jpg')}" />
+                          </div>
+                          <div class="profile-pic" style="margin-left:2%">
+                              <img src="{!URLFOR($Resource.Assets_SU,'Images/dp2.jpg')}" />
+                          </div>
+                          <div class="profile-pic" style="margin-left:10%">
+                              <img src="{!URLFOR($Resource.Assets_SU,'Images/dp3.jpg')}" />
+                          </div>
+                          <div class="profile-pic" style="margin-left:21%">
+                              <img src="{!URLFOR($Resource.Assets_SU,'Images/dp4.jpg')}" />
+                          </div>
+                          <div class="profile-pic" style="margin-left:35%">
+                              <img src="{!URLFOR($Resource.Assets_SU,'Images/dp5.jpg')}" />
+                          </div>
+                          <div class="profile-pic" style="margin-left:40%">
+                              <img src="{!URLFOR($Resource.Assets_SU,'Images/dp6.jpg')}" />
+                          </div>
+                          <div class="profile-pic" style="margin-left:45%">
+                              <img src="{!URLFOR($Resource.Assets_SU,'Images/dp7.jpg')}" />
+                          </div>
+                      </div>
+                  </div>
+                  <div class="col-lg-1 col-md-1 col-xs-1 col-sm-1" style="margin-left: 15px;">
+                      <img src="{!URLFOR($Resource.Assets_SU,'Assets/edcast.png')}" style="float:right; width:75px;margin-top: 8px;" />
+                  </div>
+              </div>
+          </div>
+      </div>
+      <div class="cls-back-div"></div>
+</body>
+</html>
+</apex:page>

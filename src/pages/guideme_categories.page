@@ -1,0 +1,101 @@
+<apex:page standardStylesheets="false" sidebar="false" controller="GuidemeCategoriesController" action="{!getGuidemeCategories}"> 
+<html xmlns="https://www.w3.org/2000/svg" xmlns:xlink="https://www.w3.org/1999/xlink">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="stylesheet" href="{!URLFOR($Resource.Assets_SU,'bootstrap/css/bootstrap.css')}"/>
+    <link rel="stylesheet" href="{!URLFOR($Resource.Assets_SU,'Styles/style.css')}"/>
+    <link rel="stylesheet" href="{!URLFOR($Resource.Assets_SU,'Styles/Main.css')}"/>
+    <title>Guideme Categories</title>
+</head>
+<body>
+     <apex:form > 
+    <div  style="background-color:#f5f5f5; margin-top: -10px;margin-left: -10px;margin-right: -10px;">
+        <div class="header" id="header">
+        <div class="header-first">
+                <div class="col-lg-8 col-md-8 col-sm-8 col-xs-8 col-lg-offset-2 col-md-offset-2 col-sm-offset-2 col-xs-offset-2">
+                    <div style="width:200px; margin:7px auto;">
+                        <input type="text" id="search-text-box"  name="search" placeholder="Search here"/>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
+                    <div class="notification">
+                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/01.png')}" />
+                    </div>
+                </div>
+            </div>
+        <div class="header-second">
+                <div class="col-lg-9 col-md-9 col-sm-9 col-xs-9">
+                    <div class="site-map">
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3">
+                    <div class="grid-type">
+                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/02.png')}" />
+                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/03.png')}" />
+                    </div>
+                </div>
+            </div>
+        </div>
+       
+        <div class="container-fluid" style="height:500px;">
+             <div class="row">
+              <apex:repeat value="{!guidemedto}" var="dto"> 
+              <apex:repeat value="{!dto.message.categories}" var="cat">
+                <div class="col-lg-3 col-md-4 col-sm-6  txt-center cls-cat-list-home">
+                <div class="cls-cat-div">
+                <apex:commandLink action="{!getCategoriesByCategoryId}" value="">  
+                 <apex:param name="parent_id" assignTo="{!parent_id}" id="parent_id" value="{!cat.category_id}"/>   
+                <img class="cls-cat-div-img" src="{!cat.category_image}"/>
+                </apex:commandLink>
+                    
+
+                <p class="cls-cat-div"> {!cat.category_title}</p>
+               </div>
+              </div>
+              </apex:repeat>    
+              </apex:repeat>
+            </div>
+        </div>
+        
+        <div class="footer" id="footer">
+            <div class="row">
+                <div class="col-lg-1 col-md-1 col-xs-1 col-sm-1" id="sales_uni_logo">
+                    <img src="{!URLFOR($Resource.Assets_SU,'Assets/SU.png')}" height="45"/>
+                </div>
+                <div class="col-lg-10 col-md-10 col-xs-10 col-sm-10" id="progress_bar">
+                    <span style="display:block;width:50%;text-align:right;font-size: 10px;font-weight: bold;">50%</span>
+                    <div class="progress-container round-xlarge">
+                        <div class="progressbar round-xlarge" style="width:50%"></div>
+                        <div class="profile-pic" style="margin-left:10px">
+                            <img src="{!URLFOR($Resource.Assets_SU,'Images/dp1.jpg')}" />
+                        </div>
+                        <div class="profile-pic" style="margin-left:2%">
+                            <img src="{!URLFOR($Resource.Assets_SU,'Images/dp2.jpg')}" />
+                        </div>
+                        <div class="profile-pic" style="margin-left:10%">
+                            <img src="{!URLFOR($Resource.Assets_SU,'Images/dp3.jpg')}" />
+                        </div>
+                        <div class="profile-pic" style="margin-left:21%">
+                            <img src="{!URLFOR($Resource.Assets_SU,'Images/dp4.jpg')}" />
+                        </div>
+                        <div class="profile-pic" style="margin-left:35%">
+                            <img src="{!URLFOR($Resource.Assets_SU,'Images/dp5.jpg')}" />
+                        </div>
+                        <div class="profile-pic" style="margin-left:40%">
+                            <img src="{!URLFOR($Resource.Assets_SU,'Images/dp6.jpg')}" />
+                        </div>
+                        <div class="profile-pic" style="margin-left:45%">
+                            <img src="{!URLFOR($Resource.Assets_SU,'Images/dp7.jpg')}" />
+                        </div>
+                    </div>
+                </div>
+            <div class="col-lg-1 col-md-1 col-xs-1 col-sm-1" style="margin-left: 15px;">
+                <img src="{!URLFOR($Resource.Assets_SU,'Assets/edcast.png')}" style="float:right; width:75px;margin-top: 8px;" />
+            </div>
+        </div>
+    </div>
+    </div>
+    </apex:form>   
+</body>
+</html>
+</apex:page>

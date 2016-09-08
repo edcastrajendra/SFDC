@@ -1,0 +1,442 @@
+<apex:component controller="AutoCompleteController"> 
+<script>
+ var maxBlockSize = 256 * 1024;//Each file will be split in 256 KB.
+        var numberOfPages = 1;
+        var numberOfBlocks = 1;
+        var selectedFile = null;
+        var currentFilePointer = 0;
+        var totalBytesRemaining = 0;
+        var blockIds = new Array();
+        var blockIdPrefix = "block-";
+        var submitUri = null;
+        var bytesUploaded = 0;
+        var percentComplete = 0;
+        $(document).ready(function () {
+            $("#file").bind('change', handleFileSelect);
+            if (window.File && window.FileReader && window.FileList && window.Blob) {
+                // Great success! All the File APIs are supported.
+            } else {
+                alert('The File APIs are not fully supported in this browser.');
+            }
+        });
+        function handleFileSelect(e) {
+            $( ".command-Button-save" ).prop( "disabled", true );
+            $('.cls-product-training-div').hide();
+            $('.cls-video-submit-div').show();
+            percentComplete=0;
+            maxBlockSize = 256 * 1024;
+            currentFilePointer = 0;
+            totalBytesRemaining = 0;
+            var files = e.target.files;
+            selectedFile = files[0];
+            console.log(selectedFile.name);
+            console.log(selectedFile.size);
+            console.log(selectedFile.type);
+            var fileSize = selectedFile.size;
+            if (fileSize < maxBlockSize) {
+                maxBlockSize = fileSize;
+            }
+            totalBytesRemaining = fileSize;
+            if (fileSize % maxBlockSize == 0) {
+                numberOfBlocks = fileSize / maxBlockSize;
+            } else {
+                numberOfBlocks = parseInt(fileSize / maxBlockSize, 10) + 1;
+            }
+            var baseUrl = $("#sasUrl").val();
+            var indexOfQueryStart = baseUrl.indexOf("?");
+            submitUri = baseUrl.substring(0, indexOfQueryStart)  + baseUrl.substring(indexOfQueryStart);
+            uploadFileInBlocks();      
+        }
+        var reader = new FileReader();
+        reader.onloadend = function (evt) {
+            if (evt.target.readyState == FileReader.DONE) {
+                var uri = submitUri + '&comp=block&blockid=' + blockIds[blockIds.length - 1];
+                var requestData = new Uint8Array(evt.target.result);
+                $.ajax({
+                    url: uri,
+                    type: "PUT",
+                    data: requestData,
+                    processData: false,
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader('x-ms-blob-type', 'BlockBlob');
+                    },
+                    success: function (data, status) {
+                        bytesUploaded += requestData.length;
+                        percentComplete = ((parseInt(bytesUploaded) / parseInt(selectedFile.size)) * 100).toFixed(0);
+                         console.log('percent='+percentComplete);
+                        if(percentComplete <= 100){
+                         $(".cls-percentage").width(percentComplete+"%");   
+                         $(".percentage").text(percentComplete);  
+                           if(percentComplete == 100){
+                               $(".command-Button-save").removeAttr('disabled');
+                               $(".command-Button-save").css("opacity", "1.5");
+                               }
+                            }
+                        uploadFileInBlocks();
+                    },
+                    error: function(xhr, desc, err) {
+                    }
+                });
+            }
+        };
+        function uploadFileInBlocks() {
+            if (totalBytesRemaining > 0) {
+                console.log("current file pointer = " + currentFilePointer + " bytes read = " + maxBlockSize);
+                var fileContent = selectedFile.slice(currentFilePointer, currentFilePointer + maxBlockSize);
+                var blockId = blockIdPrefix + pad(blockIds.length, 6); 
+                console.log("block id = " + blockId);
+                blockIds.push(btoa(blockId));
+                reader.readAsArrayBuffer(fileContent);
+                currentFilePointer += maxBlockSize;
+                totalBytesRemaining -= maxBlockSize;
+                if (totalBytesRemaining < maxBlockSize) {
+                    maxBlockSize = totalBytesRemaining;
+                }
+            } else {
+                commitBlockList();
+            }
+        }
+        function commitBlockList() {
+            var uri = submitUri + '&comp=blocklist';
+            console.log(uri);
+            var requestBody = '<?xml version="1.0" encoding="utf-8"?><BlockList>';
+            for (var i = 0; i < blockIds.length; i++) {
+                requestBody += '<Latest>' + blockIds[i] + '</Latest>';
+            }
+            requestBody += '</BlockList>';
+            $.ajax({
+                url: uri,
+                type: "PUT",
+                data: requestBody,
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader('x-ms-blob-content-type', selectedFile.type);
+                },
+                success: function (data, status) {
+                },
+                error: function (xhr, desc, err) {
+                    console.log(desc);
+                    console.log(err);
+                }
+            });
+ 
+        }
+        function pad(number, length) {
+            var str = '' + number;
+            while (str.length < length) {
+                str = '0' + str;
+            }
+            return str;
+        }  
+function getNextPage(){
+numberOfPages++;
+console.log(numberOfPages);  
+console.log($(".cls-search-input-sfdc").val()); 
+queryTerm= $(".cls-search-input-sfdc").val();  
+$(".cls-search-input-sfdc").addClass('working');    
+AutoCompleteController.getAutoComplete(queryTerm,numberOfPages, function(result, event){
+                        if(event.type == 'exception') {
+                              console.log('exception>>>>>>>>>>>>'+event.message);
+                        } else {
+                     console.log(result.message.speech);
+                    var objectArray = result.message.speech;
+                     var htmlResult=''; 
+                     console.log(objectArray.length); 
+                   var Arraylength = objectArray.length; 
+                    if(Arraylength == 20){
+                        $(".cls-next-div").show();
+                        }else{
+                         $(".cls-next-div").hide();   
+                            }
+                   for(var i=0;i<objectArray.length;i++){
+                       htmlResult += '<div class="col-sm-4 col-xs-4 col-lg-3" style="display:inline-block;padding: 15px;">'
+                     +' <div class="col-sm-12 col-xs-12" style="padding:10px 10px 0;display:inline-block;box-shadow: -2px 2px 5px #d9d9d9;background-color: #fafafa;border: 1px solid #e0e0e0;">'
+                         +'<div class="col-sm-12 col-xs-12" style="padding: 0 0 5px;">'
+                                +' <span style="font-size: 13px;font-weight:bold;white-space: nowrap;text-overflow: ellipsis;overflow: hidden;display: block;" class="ng-binding">'+objectArray[i].title+'</span>'
+                        +' </div>'
+                        +' <div class="col-sm-12 col-xs-12" style="padding:0;">'
+                              +'<img class="col-sm-12 col-xs-12" src="'+objectArray[i].thumb_url+'" style="padding:0;height:150px;">'
+                             +'<img class="img-responsive" onclick="searchVideoInfo('+objectArray[i].video_id+','+objectArray[i].speech_id+')" style="cursor: pointer;display:block;position:absolute;left: 50%;top: 50%;transform: translate(-50%,-50%);width: 20%;" src="{!URLFOR($Resource.Assets_SU,"Assets/video_play_btn.png")}"/>'
+                          +'</div>'
+                          +'<div style="float:left;width:100%;padding:5px 0;">'
+                              +'<div style="padding: 0px;float:left;">'
+                                 +'<div style="display:inline-block;font-size: 11px;">'
+                                  +'<span class="star" style="color:#0f7be4;"></span>'
+                                  +'<span class="star" style="color:#0f7be4;"></span>'
+                                  +'<span class="star" style="color:#0f7be4;"></span>'
+                                 +' <span class="star" style="color:#0f7be4;"></span>'
+                                  +'<span class="star" style="color:#0f7be4;"></span>'
+                                 +'</div>'
+                              +'</div>'
+                               +'<div style="float:right;padding: 2px;">'
+                                 +' <span style="color:#888888;text-align:right;font-size: 12px;" class="ng-binding"> '+objectArray[i].comments 
+                                     +' <span aria-hidden="true" class="fa fa-commenting-o" style="font-size: 14px;"></span>'
+                                  +'</span>'
+                                  +'<span style="color:#888888;text-align:right;font-size: 12px;">1000 '
+                                     +' <span aria-hidden="true" class="fa fa-eye" style="font-size: 14px;"></span>'
+                                  +'</span>'
+                              +'</div>'
+                          +'</div>'
+                      +'</div>'
+                  +'</div>';
+                     } 
+                      $('.cls-search-input-sfdc').removeClass('working'); 
+                      $('.cls-product-training-div').hide();   
+                       $('.cls-video-list-div').show();     
+                      $('#result').html(htmlResult);
+                 }
+ });    
+}    
+ $(document).ready(function(){
+               var queryTerm;
+                $(".cls-demo-search-input-sfdc").autocomplete({
+                source : function (request, response) { 
+                  queryTerm = request.term;
+                    AutoCompleteController.getAutoCompleteGuidemeTour(queryTerm, function(result, event){
+                        if(event.type == 'exception') {
+                              console.log('exception>>>>>>>>>>>>'+event.message);
+                        } else {
+                     
+                    var objectArray = result.message.tours;
+                    console.log(objectArray);        
+                     var htmlResult='';       
+                   for(var i=0;i<objectArray.length;i++){
+                       htmlResult += '<div class="col-sm-4 col-xs-4 col-lg-3" style="display:inline-block;padding: 15px;">'
+                     +' <div class="col-sm-12 col-xs-12" style="padding:10px 10px 0;display:inline-block;box-shadow: -2px 2px 5px #d9d9d9;background-color: #fafafa;border: 1px solid #e0e0e0;">'
+                         +'<div class="col-sm-12 col-xs-12" style="padding: 0 0 5px;">'
+                                +' <span style="font-size: 13px;font-weight:bold;white-space: nowrap;text-overflow: ellipsis;overflow: hidden;display: block;" class="ng-binding">'+objectArray[i].tour_title+'</span>'
+                        +' </div>'
+                        +' <div class="col-sm-12 col-xs-12" style="padding:0;">'
+                              +'<img class="col-sm-12 col-xs-12" src="'+objectArray[i].tour_image+'" style="padding:0;height:150px;">'
+                             +'<img class="img-responsive" onclick="searchVideoInfoDemo('+objectArray[i].tour_id+','+objectArray[i].category_id+')" style="cursor: pointer;display:block;position:absolute;left: 50%;top: 50%;transform: translate(-50%,-50%);width: 20%;" src="{!URLFOR($Resource.Assets_SU,"Assets/video_play_btn.png")}"/>'
+                          +'</div>'
+                          +'<div style="float:left;width:100%;padding:5px 0;">'
+                              +'<div style="padding: 0px;float:left;">'
+                                 +'<div style="display:inline-block;font-size: 11px;">'
+                                  +'<span class="star" style="color:#0f7be4;"></span>'
+                                  +'<span class="star" style="color:#0f7be4;"></span>'
+                                  +'<span class="star" style="color:#0f7be4;"></span>'
+                                 +' <span class="star" style="color:#0f7be4;"></span>'
+                                  +'<span class="star" style="color:#0f7be4;"></span>'
+                                 +'</div>'
+                              +'</div>'
+                               +'<div style="float:right;padding: 2px;">'
+                                 +' <span style="color:#888888;text-align:right;font-size: 12px;" class="ng-binding"> 0'
+                                     +' <span aria-hidden="true" class="fa fa-commenting-o" style="font-size: 14px;"></span>'
+                                  +'</span>'
+                                  +'<span style="color:#888888;text-align:right;font-size: 12px;">1000 '
+                                     +' <span aria-hidden="true" class="fa fa-eye" style="font-size: 14px;"></span>'
+                                  +'</span>'
+                              +'</div>'
+                          +'</div>'
+                      +'</div>'
+                  +'</div>';
+                     } 
+                      $('.cls-demo-search-input-sfdc').removeClass('working'); 
+                      $('.cls-product-training-div').hide();   
+                       $('.cls-video-list-div').show();     
+                      $('#result').html(htmlResult);
+                       }
+                    });
+              },
+              search  : function(){$(this).addClass('working');},
+             }); 
+                $(".cls-search-input-sfdc").autocomplete({
+                source : function (request, response) { 
+                  queryTerm = request.term;
+                    AutoCompleteController.getAutoComplete(queryTerm,'1', function(result, event){
+                        if(event.type == 'exception') {
+                              console.log('exception>>>>>>>>>>>>'+event.message);
+                        } else {
+                    var objectArray = result.message.speech;
+                    var htmlResult=''; 
+                   console.log(objectArray.length); 
+                   var Arraylength = objectArray.length; 
+                    if(Arraylength == 20){
+                        numberOfPages=1;
+                        $(".cls-next-div").show();
+                        }else{
+                         $(".cls-next-div").hide();   
+                            }
+                   for(var i=0;i<objectArray.length;i++){
+                       htmlResult += '<div class="col-sm-4 col-xs-4 col-lg-3" style="display:inline-block;padding: 15px;">'
+                     +' <div class="col-sm-12 col-xs-12" style="padding:10px 10px 0;display:inline-block;box-shadow: -2px 2px 5px #d9d9d9;background-color: #fafafa;border: 1px solid #e0e0e0;">'
+                         +'<div class="col-sm-12 col-xs-12" style="padding: 0 0 5px;">'
+                                +' <span style="font-size: 13px;font-weight:bold;white-space: nowrap;text-overflow: ellipsis;overflow: hidden;display: block;" class="ng-binding">'+objectArray[i].title+'</span>'
+                        +' </div>'
+                        +' <div class="col-sm-12 col-xs-12" style="padding:0;">'
+                              +'<img class="col-sm-12 col-xs-12" src="'+objectArray[i].thumb_url+'" style="padding:0;height:150px;">'
+                             +'<img class="img-responsive" onclick="searchVideoInfo('+objectArray[i].video_id+','+objectArray[i].speech_id+')" style="cursor: pointer;display:block;position:absolute;left: 50%;top: 50%;transform: translate(-50%,-50%);width: 20%;" src="{!URLFOR($Resource.Assets_SU,"Assets/video_play_btn.png")}"/>'
+                          +'</div>'
+                          +'<div style="float:left;width:100%;padding:5px 0;">'
+                              +'<div style="padding: 0px;float:left;">'
+                                 +'<div style="display:inline-block;font-size: 11px;">'
+                                  +'<span class="star" style="color:#0f7be4;"></span>'
+                                  +'<span class="star" style="color:#0f7be4;"></span>'
+                                  +'<span class="star" style="color:#0f7be4;"></span>'
+                                 +' <span class="star" style="color:#0f7be4;"></span>'
+                                  +'<span class="star" style="color:#0f7be4;"></span>'
+                                 +'</div>'
+                              +'</div>'
+                               +'<div style="float:right;padding: 2px;">'
+                                 +' <span style="color:#888888;text-align:right;font-size: 12px;" class="ng-binding"> '+objectArray[i].comments 
+                                     +' <span aria-hidden="true" class="fa fa-commenting-o" style="font-size: 14px;"></span>'
+                                  +'</span>'
+                                  +'<span style="color:#888888;text-align:right;font-size: 12px;">1000 '
+                                     +' <span aria-hidden="true" class="fa fa-eye" style="font-size: 14px;"></span>'
+                                  +'</span>'
+                              +'</div>'
+                          +'</div>'
+                      +'</div>'
+                  +'</div>';
+                     } 
+                      $('.cls-search-input-sfdc').removeClass('working'); 
+                      $('.cls-product-training-div').hide();   
+                       $('.cls-video-list-div').show();     
+                      $('#result').html(htmlResult);
+                       }
+                    });
+              },
+              search  : function(){$(this).addClass('working');},
+             });
+        });
+        function searchOption(){
+                $('.cls-label-search-pop-div').toggle();
+            }    
+            $(document).ready(function(){
+                $("#search-demo").click(function(){
+                    $(".change-search-option").html('Search Demo'); 
+                    $(".cls-label-search-pop-div").hide(); 
+                    $(".cls-search-input-sfdc").hide(); 
+                    $(".cls-demo-search-input-sfdc").show();
+                }); 
+                $("#search-pitch").click(function(){
+                    $(".change-search-option").html('Search Pitch'); 
+                    $(".cls-label-search-pop-div").hide(); 
+                    $(".cls-search-input-sfdc").show(); 
+                    $(".cls-demo-search-input-sfdc").hide();
+                });   
+                $(".cls-search-input-sfdc").keyup(function(){
+                    if(this.value.length > 0){
+                    }else{
+                        $(".cls-video-list-div").hide();
+                        $(".cls-product-training-div").show();
+                    }
+                });
+                $(".cls-demo-search-input-sfdc").keyup(function(){
+                    if(this.value.length > 0){
+                    }else{
+                        $(".cls-video-list-div").hide();
+                        $(".cls-product-training-div").show();
+                    }
+                });
+                
+            });  
+         function getList(){
+         $('.cls-list-div').toggle();
+         }
+         function getMyView(){
+         $('.cls-my-view-div').toggle();
+         } 
+ $(document).ready(function(){
+                $(".select-all-group").click(function() {
+                    if($(".cls-white-group").hasClass('cls-select-blue-image')){
+                        $(".cls-white-group").attr("src", "{!URLFOR($Resource.vrp,'Assets/circle_blue.png')}");
+                        $(".cls-white-group").removeClass('cls-select-blue-image');
+                        $(".cls-select-groups").css("display","block");
+                    }else{
+                        $(".cls-white-group").attr("src", "{!URLFOR($Resource.vrp,'Assets/circle_white.png')}");
+                        $(".cls-white-group").addClass('cls-select-blue-image');  
+                        $(".cls-select-groups").css("display","none");
+                    }
+                });
+               $(".select-all-mentor").click(function() {
+                    if($(".cls-white-mentor").hasClass('cls-select-blue-image')){
+                        $(".cls-white-mentor").attr("src", "{!URLFOR($Resource.vrp,'Assets/circle_blue.png')}");
+                        $(".cls-white-mentor").removeClass('cls-select-blue-image');
+                        $(".cls-select-mentors").css("display","block");
+                    }else{
+                        $(".cls-white-mentor").attr("src", "{!URLFOR($Resource.vrp,'Assets/circle_white.png')}");
+                        $(".cls-white-mentor").addClass('cls-select-blue-image');  
+                        $(".cls-select-mentors").css("display","none");
+                    }
+                });
+            });   
+            
+            function searchOption(){
+                $('.cls-label-search-pop-div').toggle();
+            }    
+            function getMentors(){
+                $('.mentors').show();
+                $('.groups').hide();
+                $("#mentors_button").attr("src", "{!URLFOR($Resource.vrp,'Assets/circle_blue.png')}");
+                $("#groups_button").attr("src", "{!URLFOR($Resource.vrp,'Assets/circle_white.png')}");
+            }
+            function getGroups(){
+                $('.mentors').hide();
+                $('.groups').show();
+                $("#groups_button").attr("src", "{!URLFOR($Resource.vrp,'Assets/circle_blue.png')}");
+                $("#mentors_button").attr("src", "{!URLFOR($Resource.vrp,'Assets/circle_white.png')}");
+            } 
+
+            function shareMain(){
+                if(!$(".cls-white-group").hasClass('cls-select-blue-image')){
+                   var groupId= [];   
+                  $(".cls-group-id").each(function() {
+                   groupId.push($(this).val());;
+                   });
+                 var group = groupId[0];
+                 for (i = 1; i < groupId.length; i++) { 
+                 group += ','+groupId[i];
+                 } 
+                getShareVideoList(group);
+                } 
+                if(!$(".cls-white-mentor").hasClass('cls-select-blue-image')){
+                  var userId= [];   
+                  $(".cls-user-id").each(function() {
+                   userId.push($(this).val());;
+                   }); 
+                 var user = userId[0];
+                 for (i = 1; i < userId.length; i++) { 
+                 user += ','+userId[i];
+                 } 
+                getShareVideoList(user);
+                }
+            }  
+                  $(document).ready(function(){ 
+      $('#selectall').on('click',function(){
+        if(this.checked){
+            $('.cls-checkbox').each(function(){
+                this.checked = true;
+            });
+        }else{
+             $('.cls-checkbox').each(function(){
+                this.checked = false;
+            });
+        }
+    });
+    $('.cls-checkbox').on('click',function(){
+        if($('.cls-checkbox:checked').length == $('.cls-checkbox').length){
+            $('#select_all').prop('checked',true);
+        }else{
+            $('#select_all').prop('checked',false);
+        }
+    });
+});   
+    
+function searchOption(){
+$('.cls-label-search-pop-div').toggle();
+ }    
+function shareVideo(){
+  var groupId= [];   
+  var userId = [];
+  $.each($("input[name='group_id']:checked"),function(){groupId.push($(this).val());}); 
+  $.each($("input[name='user_id']:checked"),function(){userId.push($(this).val());}); 
+  var group = groupId[0];  
+  var user=userId[0];  
+  for (i = 1; i < userId.length; i++) { 
+    user += ','+userId[i];
+     }  
+ getShareVideoList(user,group);   
+}        
+</script>
+</apex:component>

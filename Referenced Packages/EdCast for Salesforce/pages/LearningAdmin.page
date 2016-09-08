@@ -1,0 +1,767 @@
+<apex:page id="pg" title="EdCast-Learning Admin" controller="edcast.EnrollController" action="{!getCourseOfferings}" sidebar="false" tabStyle="Learning_Admin__tab">
+<html>
+    <head>        
+        <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.Edcast_Resource,'css/edcast_style.css')}"/>
+        <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.Edcast_Resource,'css/custom_style.css')}"/>
+        <link href='https://fonts.googleapis.com/css?family=Lato:400,300,700,700italic,400italic,300italic,100italic,100' rel='stylesheet' type='text/css'/>
+        <link rel="stylesheet" href="{!URLFOR($Resource.Edcast_Resource,'jQueryTagEditor/jquery.tag-editor.css')}"/>
+        
+        <script src="{!URLFOR($Resource.Edcast_Resource,'js/jquery-1.11.1.min.js')}"></script>
+        <script src="{!URLFOR($Resource.Edcast_Resource,'js/jquery-ui.min.js')}"></script>
+        <script src="{!URLFOR($Resource.Edcast_Resource,'jQueryTagEditor/jquery.caret.min.js')}"></script>            
+        <script src="{!URLFOR($Resource.Edcast_Resource,'jQueryTagEditor/jquery.tag-editor.min.js')}"></script>
+        
+        
+        <style>
+            a.card-button {
+                padding: 5px 5px !important ;
+                width: 110px !important;
+            }
+            
+            table.messageTable tr th, table.messageTable tr td {
+                padding: 0;
+            }
+            .mailtoEdcastMsg {
+                font-size: inherit !important;
+                margin: 0 !important;
+                text-decoration: none;
+            }
+            .mailtoEdcastMsg:hover {                
+                text-decoration: underline !important;
+            }
+            
+            .contactus-container{
+                min-height: 500px;
+                background:url({!URLFOR($Resource.Edcast_Resource,'images/Picture1.jpg')});
+                position: relative;
+                margin: 0 auto;
+                padding: 20px;
+                resize: both;
+                overflow: auto;
+                background-repeat: no-repeat;
+                background-size: cover;
+            }
+            
+            .contactus-container .contactus-contents{
+                width: 80%;
+                //max-height: 460px;
+                padding: 5px 20px;
+                //position: absolute;
+                top: 10%;
+                background-color: rgba(128, 128, 128, 0.9);
+                left: 10%;
+            }
+            
+            .contactus-contents h2,.contactus-contents h3,.contactus-contents h4,.contactus-contents h5,.contactus-contents h6{
+                color:white;
+                font-weight:700;
+            }
+            
+            .contactus-contents ul{
+                padding-top: 20px;
+                margin-left: 20px;
+            }
+            
+            .contactus-contents ul li{
+                list-style-type: disc;
+                font-size: 14px;
+                color: rgb(255, 255, 255);
+                padding: 5px 0;
+            }
+            
+            .contactus-contents ul li span{
+                color: rgb(255, 255, 255);
+                font-weight: 600;
+            }
+            
+            .contactus-contents p{
+                font-size: 18px;
+                font-weight: 400;
+                color: #F4B081;
+            
+            }
+            
+            
+            .slds-button:hover, .slds-button:focus {
+                color: #005fb2;
+            }
+            
+            .slds-button--brand:hover, .slds-button--brand:focus {
+                background-color: #005fb2;
+                color: #fff;
+            }
+            
+            
+            input.slds-button {
+                position: relative;
+                display: inline-block;
+                padding: 0;
+                background: transparent;
+                background-clip: padding-box;
+                border: none;
+                border-radius: 0.25rem;
+                color: #0070d2;
+                font-size: inherit;
+                line-height: 2.125rem;
+                text-decoration: none;
+                -webkit-appearance: none;
+                white-space: normal;
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+                -webkit-transition: color 0.05s linear,background-color 0.05s linear;
+                transition: color 0.05s linear,background-color 0.05s linear;
+            }
+            
+            input.slds-button--brand {
+                padding-left: 1rem;
+                padding-right: 1rem;
+                text-align: center;
+                vertical-align: middle;                
+                color: #fff;
+                font-size: 15px;
+                font-family: lato;
+                padding: 0 2.5rem;
+                min-height: 45px;
+                border-radius: 5px;
+                border: 1px solid #477399;
+                background-color: #00B0F0;
+            }
+            
+            .outerNoSidebar{
+                border: 0;
+            }
+            
+            ul.inner-ul li {
+                padding: 0px !important;
+                color: #F4B081;
+            }
+            
+            .info-email-link:hover{
+                text-decoration: underline;
+            }
+        </style>
+        <script>
+            $(function() {
+              init();
+            });
+        </script>
+    </head>
+
+    <body >
+        <div class="slds enroll-page grey">
+            <apex:form id="frm">
+                
+                <script>
+                    
+                    $(document).ready(function(){
+                        $(".slds-button").removeClass("btn");
+                    });
+                
+                    function init(){
+                        try{
+                            var searchTags = $.parseJSON('{!JSENCODE(searchCourses)}');
+                            $(".searchTags").autocomplete({
+                                source: searchTags
+                                
+                            });
+                           
+                            var availableTags = $.parseJSON('{!JSENCODE(usersStr)}');
+                            $(".tags").tagEditor({
+                                autocomplete: {
+                                    delay: 0,
+                                    position: {
+                                        collision: 'flip'
+                                    },
+                                    source: availableTags
+                                },
+                                forceLowercase: false
+                            });
+                            
+                            $('.left-div').height('auto');
+                            $('.right-div').height('auto');
+                            if($('.left-div').height() <= $('.right-div').height())
+                                $('.left-div').height( $('.right-div').height());
+                            else
+                                $('.right-div').height( $('.left-div').height());
+                        }catch(err ){}
+                    }
+                </script>
+                <apex:actionFunction action="{!changeRole}" name="changeRole" reRender="frm" status="status" oncomplete="init();" />
+                <apex:actionFunction action="{!changeGroup}" name="changeGroup" reRender="frm" status="status" oncomplete="init();" />
+                <apex:actionFunction name="addRemoveRoles" action="{!addRemoveRoles}" reRender="frm" status="status">
+                    <apex:param name="param1" assignTo="{!buttonType}" value="" />
+                </apex:actionFunction>
+               
+                <apex:actionFunction name="addRemoveGroup" action="{!addRemoveGroup}" reRender="frm" status="status">
+                    <apex:param name="param1" assignTo="{!buttonType}" value="" />
+                </apex:actionFunction>                
+                
+                <apex:actionFunction name="viewStyleChange" reRender="frm" status="status">
+                    <apex:param name="param1" assignTo="{!currentView}" value="" />
+                </apex:actionFunction>
+                <apex:actionStatus id="status">
+                    <apex:facet name="start">
+                        <apex:outputPanel id="tstpopup">
+                            <apex:outputPanel styleClass="popupBackground" layout="block" />
+                            <apex:outputPanel styleClass="custPopup" layout="block">
+                                <img src="/img/loading24.gif" style="vertical-align:middle; horizontal-align:middle" />
+                                <span>Please wait...</span>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                    </apex:facet>
+                </apex:actionStatus>
+
+                <apex:pageMessages ></apex:pageMessages>
+                
+                <apex:outputPanel rendered="{!isEdcastAuthorized && !isPaidVersionFlag}">
+                    <div class="contactus-panel wrapper">
+                        <div id="wrapper"> 
+                            <div class="row contactus-container" style="">
+                                <apex:outputPanel layout="none" rendered="{!AND( !emailSent, !hasEmailError)}">
+                                    <div class="columns contactus-contents">
+                                        <div>
+                                            <h2>From average to world class selling with EdCast<sup style="font-size:16px">TM</sup> SmartBites and SalesU</h2>
+                                            <br/>
+                                            <h4 style="color: #00B0F0;">Download SalesU app and get access to the power of EdCast Network</h4>
+                                            <ul>
+                                                <li>
+                                                    <p>
+                                                        <span>Daily Micro Learning. </span> Access latest product, market and competitive knolwdge.
+                                                    </p>
+                                                </li>
+                                                <li>
+                                                    <p>
+                                                        <span>Video Role Play. </span> Get your reps on message with live role play (industry's first).
+                                                    </p>
+                                                </li>
+                                                <li>
+                                                    <p>
+                                                        <span>Just-in-time. </span> Real-time learning with live streams from SMEs in your company.
+                                                    </p>
+                                                </li>
+                                                <li>
+                                                    <p>
+                                                        <span>Key advantages with SalesU: </span>
+                                                    </p>
+                                                </li> 
+                                                <!--
+                                                <li style="list-style: none;">
+                                                    <apex:commandButton value="Upgrade to EdCast Premium" action="{!sendUpgradeEmail}" style="" styleClass="slds-button slds-button--brand"/>
+                                                    <span style="color: #292828;padding-left: 25px;font-size: 16px;">(* For just $5 / user / month *)</span>
+                                                    <br/>
+                                                    <p style="font-size: 13px; font-weight: 300; color: white;">* Clicking on this button will send your basic contact information to <a href="mailTo:info@edcast.com" style="color: white;" class="info-email-link">info@edcast.com</a></p>
+                                                </li>
+												-->
+                                                <li style="list-style: none;">                        
+                                                    <ul class = "inner-ul" style="padding-top: 0; float:left;">
+                                                        
+                                                        <li>
+                                                            <p> Follow cutting edge of sales best practices by following sales Gurus</p>
+                                                        </li>
+                                                        <li>
+                                                            <p> Trusted by fortune 500 companies </p>
+                                                        </li>
+                                                        <li>
+                                                            <p> More than 100,000 sales people trained</p>
+                                                        </li>
+                                                    </ul>
+                                                    <div style="float:left; margin-top:10px; width:100%; margin-bottom:10px;">
+                                                        <p>
+                                                            <span>Search for "Sales University" on iOS and Android market place</span>
+                                                        </p>
+                                                        <a href="https://play.google.com/store/apps/details?id=com.quizmine.gosalestrain&hl=en/" target="blank"><img src="{!URLFOR($Resource.Edcast_Resource,'images/android-store.png')}" style="margin-right:10px; float:left;"/></a>
+                                                        <a href="https://itunes.apple.com/us/app/gosalestrain/id838119253?mt=8/" target="blank"><img src="{!URLFOR($Resource.Edcast_Resource,'images/apple-store.png')}" style="margin-right:10px; float:left;"/></a>
+                                                    </div>
+                                                </li>
+                                            </ul>
+                                            
+                                        </div>
+                                    </div>
+                                </apex:outputPanel>
+                                <apex:outputPanel layout="none" rendered="{!AND( emailSent, !hasEmailError)}">
+                                    <div class="columns contactus-contents" style="text-align:center;top: 30%;">
+                                        <input type="button" value="Thank You!" style="margin: 20px 0px;" Class="slds-button slds-button--brand"/>
+                                        <br/>
+                                        <p style="color: #FFFFFF;margin-bottom: 20px  !important;">
+                                            Thank you for your interest. We have received your email.<br/>
+                                            Our Client Success Group will contact you shortly to set you up with EdCast Premium.
+                                        </p>
+                                    </div>
+                                </apex:outputPanel>
+                                
+                                <apex:outputPanel layout="none" rendered="{!hasEmailError}">
+                                    <div class="columns contactus-contents" style="text-align:center;top: 30%;">
+                                        <p style="color:red">
+                                            <apex:outputText value="{!emailError}"></apex:outputText>
+                                        </p>
+                                    </div>
+                                </apex:outputPanel>
+                            </div>
+                        </div>
+                    </div>
+                    
+                        <!--<table border="0" cellpadding="0" cellspacing="0" class="messageTable" style="padding:0px;margin:0px;">
+                            <tbody>
+                                <tr valign="top">
+                                    <td style="padding: 10px;">
+                                        <img alt="Info" class="msgIcon" src="/s.gif" title="Info"/>
+                                    </td>
+                                    <td class="messageCell">
+                                        <div class="messageText">
+                                            <p style="margin-bottom: 0.3em; margin-top: 0.5em;">With premium EdCast, you can securely create and manage your internal courses for your employees.</p>
+                                            <p style="margin-top: 0.3em;">Contact us at <a class = "mailtoEdcastMsg" href="mailto:info@edcast.com?subject=EdCast for Salesforce inquiry">info@edcast.com</a> to learn more or configure your premium EdCast access.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td></td>
+                                    <td>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>-->
+                        
+                        
+                </apex:outputPanel>
+                <apex:outputPanel layout="none" rendered="{!isEdcastAuthorized && isPaidVersionFlag}">
+                    <apex:outputPanel layout="none" rendered="{!!courseFlag}">
+                        <div class="offering-courses-panel  wrapper">
+                            <div id="wrapper"> 
+                                <input type="text" id="hidden-box" style="width:0px;height:0px;border:none;"/>
+                                <div class="row search-container">
+
+                                    <div class="columns medium-2 mr6px left-column search-subsection" data-equalizer-watch="parent" style="">
+                                        <div class="small-12 columns">
+                                            <h3>Course Catalog</h3>
+                                        </div>
+                                        <div class="columns filter-column">
+                                            <div class="filter-accordion">
+                                                <dl class="accordion" data-accordion="">
+                                                    <dd class="accordion-navigation">
+                                                        <a class="select-cat-acc-link" href="#filter-accordion-content"> Select category</a>
+                                                        <div class="content" id="filter-accordion-content">
+                                                            <div class="price-section">                                                             
+                                                                <ul class="sb-list-open-self">                                                                      
+                                                                    <li class="pprice__open-for-enrollment" title="Open for enrollment" style = "background-size: 18px !important;padding-left: 22px;background: url({!URLFOR($Resource.Edcast_Resource,'images/open_with_enrollment.png')}) no-repeat 1px;">
+                                                                        <apex:commandLink onclick="setCategory('pprice__Open for enrollment'); return false;" value="Open for enrollment"/>
+                                                                        <span class = "right"></span>
+                                                                    </li>                                                               
+                                                                    <li class="pprice__self-paced" title="self-paced" style = "background-size: 18px !important;padding-left: 22px;background: url({!URLFOR($Resource.Edcast_Resource,'images/self_paced.png')}) no-repeat 1px;">
+                                                                        <apex:commandLink onclick="setCategory('pprice__Self-paced'); return false;" value="Self-paced"/>                                            
+                                                                        <span class = "right"></span>
+                                                                    </li>                                                                    
+                                                                </ul>
+                                                            </div>
+                                                            <div class = "mb20px">
+                                                                <h4 class=" featureStyle"> 
+                                                                    <ul >                                                                                                               
+                                                                        <li class="pprice__featured-courses" title="Featured Courses" style="font-size: 1.4375rem;">
+                                                                            <apex:commandLink styleClass="self-paced" onclick="setCategory('pprice__Featured Courses'); return false;" value="Featured Courses"/>                                            
+                                                                            <span class = "right"></span>
+                                                                        </li>                                                                    
+                                                                    </ul>                                                                    
+                                                                </h4> 
+                                                            </div>
+                                                            <div class="price-section">
+                                                                <h4>Price</h4>
+                                                                
+                                                                 <ul class="sb-list-price">  
+                                                                    <li class="sb_list_item_price pprice__free" title="Free">
+                                                                        <apex:commandLink onclick="setCategory('pprice__Free'); return false;" value="Free"/>
+                                                                        <span class = "right"></span>
+                                                                    </li>                                      
+                                                                    <li class="sb_list_item_price pprice__paid" title="Paid">
+                                                                        <apex:commandLink onclick="setCategory('pprice__Paid'); return false;" value="Paid"/>                                            
+                                                                        <span class = "right"></span>
+                                                                    </li>
+                                                                    
+                                                                </ul>
+                                                            </div>
+                                                            <div class="category-section">
+                                                                <h4>Category</h4>
+                                                                <ul class="sb-list-categories category-list-filter">
+                                                                    <apex:repeat value="{!mapCategories}" var="item">
+                                                                        <li class="sb_list_item {!mapCourseClassName[item]}" title="{!item}">
+                                                                            <apex:commandLink onclick="setCategory('{!item}'); return false;" value="{!item}"/>
+                                                                            <span class = "right course-counting">{!mapCategories[item]}</span>   
+                                                                        </li>
+                                                                    </apex:repeat>
+                                                                </ul>  
+                                                            </div>
+                                                        </div>
+                                                    </dd>
+                                                </dl>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="columns right-column">
+                                        <div class="row search-page-search-row search-subsection">
+                                            <div class="medium-6 columns">
+                                                <form action="/search" accept-charset="UTF-8" method="get">
+                                                    <input name="utf8" type="hidden" value="✓"/>
+                                                    <div class="row collapse search-form-wrapper">
+                                                        <div class="small-12 columns">
+                                                            <div class="small-11 columns search-box">
+                                                                <input class="search search-for searchTags" type="text" placeholder="search catalog" id="search-for"/>
+                                                                <input class="search-submit" type="submit" /> 
+                                                            </div>
+                                                           
+                                                        </div>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                            <div class="medium-2 columns text-right view-wrapper">View: &nbsp;
+                                                <a class="list {!IF(currentView=='list','active','inactive')}" onclick="viewStyleChange('list');return false;">
+                                                    <img src="{!URLFOR($Resource.Edcast_Resource,'images/list-view.png')}" alt="List view"/>
+                                                </a>
+                                                <a class="grid {!IF(currentView=='grid','active','inactive')}" onclick="viewStyleChange('grid');return false;">
+                                                    <img src="{!URLFOR($Resource.Edcast_Resource,'images/grid-block-view.png')}" alt="Grid block view"/>
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div class="row search-subsection" id="bottom-container">
+                                            <div class="medium-12 columns search-results-section">
+                                                
+                                                <div class="row search-navigation-row">
+                                                    <div class="small-8 columns">
+                                                        <h4 class="browse-courses-count"></h4>
+                                                    </div>
+                                                    <div class="small-4 columns">
+                                                        <div class="paginate right">
+                                                            <span class="page-numbers">
+                                                                <b class="fromToPage"></b> of <b class="totalPage"></b>
+                                                            </span>
+                                                            <a rel="previous" onclick="prePage();return false;" class="arrow-link arrow-pre" href="">&lt;</a>
+                                                            <a rel="next" onclick="nextPage();return false;" class="arrow-link arrow-next" href="">&gt;</a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="medium-12 columns search-results-section offering-search-results-section">
+                                                    <div class="empty-results">
+                                                        <p></p>
+                                                    </div>
+                                                </div>
+                                                <apex:outputPanel styleClass="" layout="none" rendered="{! OR(ISNULL(offeringCourses), offeringCourses.size == 0) }">
+                                                    <div class="medium-12 columns search-results-section">
+                                                        <div class="empty-results">
+                                                            <p>No course available.</p>
+                                                        </div>
+                                                    </div>
+                                                </apex:outputPanel>
+                                                <apex:outputPanel styleClass="" layout="none" rendered="{! offeringCourses.size > 0 }">
+                                                    <div class="learn-courses-list">
+                                                        <apex:repeat value="{!offeringCourses}" var="course">
+                                                           
+                                                           <apex:outputPanel layout="none" rendered="{!currentView=='grid'}">
+                                                           
+                                                           <div class="category pagination offering-course-card-list small-12 medium-3 large-4 columns course-card-wrapper offering-course-card" isOpenEnrollment="{!course.isOpenEnrollment}" isSelfPaced="{!course.isSelfPaced}" isPaid="{!course.feeRequired}" isFeatured="{!course.featured}">
+                                                                <div class="categories-string" style="display:none;">{!mapCourseWithCategories[course.id]}</div>
+                                                                
+                                                                <div class="template2-wrapper">
+                                                                    <div class="template2-course-card">
+                                                                        <div class="row inline-video-thumbnail">
+                                                                            <apex:commandLink action="{!selectCourse}" styleClass="card-link">
+                                                                                <apex:param assignTo="{!selectedCourseId}" name="prm" value="{!course.id}" />
+                                                                                <div class="img" style="background-image: url('{!JSENCODE(course.logoUrl)}')"></div>
+                                                                                <apex:outputPanel layout="none" rendered="{!!isNull(course.introLink)}">
+                                                                                    <span class="play video-play" data-link="{!course.introLink}"></span>
+                                                                                </apex:outputPanel>
+                                                                            </apex:commandLink>
+                                                                        </div>
+                                                                        <div class="course-info-container">
+                                                                            <div class="course-code">
+                                                                                <apex:commandLink action="{!selectCourse}" styleClass="card-link course-name">
+                                                                                    <apex:param assignTo="{!selectedCourseId}" name="prm" value="{!course.id}" />
+                                                                                    <h5>{!course.name}</h5>
+                                                                                </apex:commandLink>
+                                                                                <div class="instructor-avatars">
+                                                                                    <apex:outputPanel rendered="{!AND(!ISNULL(course.instructors), course.instructors.size > 0 )}" layout="none">
+                                                                                    <apex:commandLink action="{!selectCourse}" styleClass="card-link">
+                                                                                        <apex:param assignTo="{!selectedCourseId}" name="prm" value="{!course.id}" />
+                                                                                        <img src="{!course.instructors[0].photoUrl}"/>
+                                                                                    </apex:commandLink>
+                                                                                </apex:outputPanel>
+                                                                                </div>
+                                                                                <p class="category1"></p>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="row template2-card-buttons text-center">
+                                                                            <div class="small-12 columns">
+                                                                                <apex:commandLink action="{!selectCourse}" styleClass="card-button enroll small-12 columns mixpanel-link" style="width: 94% !important">
+                                                                                    <apex:param assignTo="{!selectedCourseId}" name="prm" value="{!course.id}" />
+                                                                                    <apex:outputText value="Manage Users" />
+                                                                                </apex:commandLink>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>  
+                                                            </div>
+                                                                
+                                                                
+                                                           </apex:outputPanel>   
+                                                            <apex:outputPanel layout="none" rendered="{!currentView=='list'}">
+                                                                                                                 
+                                                            <div class="category pagination offering-course-card-list row mb30px course-list-row"  isOpenEnrollment="{!course.isOpenEnrollment}" isSelfPaced="{!course.isSelfPaced}" isPaid="{!course.feeRequired}" isFeatured="{!course.featured}">
+                                                                <div class="categories-string" style="display:none;">{!mapCourseWithCategories[course.id]}</div>
+                                                                <div class="small-12 medium-12 large-12 columns">
+                                                                    <div class="small-12 past-course-container columns list-template inline-block" >
+                                                                        <div class="left-course-card left inline-video-thumbnail">
+                                                                            <div class="img" style="background-image: url('{!JSENCODE(course.logoUrl)}')"></div>
+                                                                        </div>
+                                                                        <div class="right-course-info-card right">
+                                                                            <div class="row">
+                                                                                <div class="small-8 columns">
+                                                                                    <apex:commandLink action="{!selectCourse}" styleClass="course-name">
+                                                                                        <apex:param assignTo="{!selectedCourseId}" name="prm" value="{!course.id}" />
+                                                                                        <h5>{!course.name}</h5>
+                                                                                    </apex:commandLink>
+                                                                                    <div class="instructor-avatars row">
+                                                                                        
+                                                                                        <apex:outputPanel layout="none" rendered="{!course.instructors.size >0}">                                                                    
+                                                                                            <div class="instructor-row small-6 columns"><img src="{!course.instructors[0].photoUrl}" alt="Default user"/>{!course.instructors[0].name}</div>
+                                                                                        </apex:outputPanel>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div class="small-4 columns category-enroll-container text-right">
+                                                                                    <p class="category1">
+                                                                                        {!mapCourseWithCategories2[course.id]}
+                                                                                    </p>
+                                                                                    <apex:commandLink action="{!selectCourse}" styleClass="card-button enroll small-6 columns mixpanel-link">
+                                                                                        <apex:param assignTo="{!selectedCourseId}" name="prm" value="{!course.id}" />
+                                                                                        <apex:outputText value="Manage Users" />
+                                                                                    </apex:commandLink>
+                                                                                </div>
+                                                                                
+                                                                            </div>
+                                                                            <div class="row info-row">
+                                                                                <div class="small-10 columns"></div>
+                                                                                <div class="small-2 columns">
+                                                                                    <p class="fee-amount">
+                                                                                        <apex:outputPanel layout="none" rendered="{!course.fee.amount != ''}">
+                                                                                            ${!course.fee.amount}
+                                                                                        </apex:outputPanel>
+                                                                                        <apex:outputPanel layout="none" rendered="{!course.fee.amount == ''}">
+                                                                                            Free
+                                                                                        </apex:outputPanel>
+                                                                                    </p>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                           </apex:outputPanel>
+                                                        </apex:repeat>
+                                                    </div>                                                   
+                                                    
+                                                </apex:outputPanel>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+
+                    <apex:outputPanel layout="block" rendered="{!courseFlag}">
+                        <div class="" style="padding: 1%;display: inline-block;">
+                            <div class="left-div">
+                                
+                                <div class="template2-wrapper" style="display:inline-block; padding:10px;">
+                                    <div class="template2-course-card">
+                                        <div class="row inline-video-thumbnail">
+                                            <div class="img" style="background-image: url('{!JSENCODE(selectedCourse.logoUrl)}')"></div>
+                                            <apex:outputPanel layout="none" rendered="{!!isNull(selectedCourse.introLink)}">
+                                                <span class="play video-play" data-link="{!selectedCourse.introLink}"></span>
+                                            </apex:outputPanel>
+                                        </div>
+                                        <div class="course-info-container">
+                                            <div class="course-code">
+                                                <h5>{!selectedCourse.name}</h5>
+                                                <div class="instructor-avatars">
+                                                    <apex:outputPanel rendered="{!AND(!ISNULL(selectedCourse.instructors), selectedCourse.instructors.size > 0 )}" layout="none">
+                                                        <img src="{!selectedCourse.instructors[0].photoUrl}"/>
+                                                    </apex:outputPanel>
+                                                </div>
+                                                <p class="category1"></p>
+                                            </div>
+                                        </div>
+                                        
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="right-div">
+                                <div style="padding: 10px; background-color: white; margin-bottom: 10px;">
+                                    <apex:commandLink action="{!BackToList}" value="<< Back to list: Courses" style="font-size: 15px;font-family: lato;"/>
+                                </div>
+                                
+                                
+                                <div style="padding: 10px; background-color: white;">
+                                    <div class="status-header">Enroll Users</div>
+                                        <table class="tbl">
+                                            <tr class="bgWhite">
+                                                <td colspan="2">
+                                                    <p>Type usernames below or choose role/group names to enroll users. You can also select specific users from roles/groups. When you are ready, click "Enroll" to enroll all indicated users.</p>
+                                                </td>
+                                            </tr>
+                                            <tr class="bgWhite">
+                                                <td>
+                                                    <apex:outputLabel style="font-weight: 600;" value="By Name" />
+                                                </td>
+                                                <td>
+                                                    <apex:inputTextarea value="{!selectedName}" styleClass="tags item lookup" />
+                                                </td>
+                                            </tr>
+                                            <tr class="bgWhite">
+                                                <td>
+                                                    <apex:outputLabel style="font-weight: 600;" value="By Roles" />
+                                                </td>
+                                                <td>
+                                                    <apex:selectList value="{!selectedRole}" size="1" styleClass="item selectOpt" onchange="changeRole();return false;">
+                                                        <apex:selectOptions value="{!roles}" />
+                                                    </apex:selectList>
+                                                    <br/>
+                                                    <apex:outputPanel layout="None" rendered="{!!(fromRolesOpt.size > 0 ) && !(selectedRolesOpt.size > 0 ) && selectedRole != '--None--'}">
+                                                        No Users found for this Role.
+                                                    </apex:outputPanel>
+                                                </td>
+
+                                            </tr >
+                                            <apex:outputPanel layout="none" rendered="{! selectedRole != '--None--'}">
+                                                <tr class="bgWhite">
+                                                    <td colspan="2">
+                                                        <apex:outputPanel layout="None" rendered="{!fromRolesOpt.size > 0 || selectedRolesOpt.size > 0}">
+                                                            <table class="tbl">
+                                                                <tr>
+                                                                    <td class="selectCell" width="40px">
+                                                                        <apex:selectList value="{!fromRolesList}" size="10" styleClass="multiselectStyle selectOpt" multiselect="true">
+                                                                            <apex:selectOptions value="{!fromRolesOpt}" />
+                                                                        </apex:selectList>
+                                                                    </td>
+                                                                    <td class="buttonCell" style="vertical-align:middle;text-align:-webkit-center;">
+                                                                        <apex:outputText >Add</apex:outputText>
+                                                                        <br/>
+                                                                        <apex:image url="/s.gif" styleClass="rightArrowIcon" onclick="addRemoveRoles('Add'); return false;" style="cursor: pointer;margin-bottom:8%;margin-top:3%;" />
+                                                                        <br/>
+                                                                        <apex:image url="/s.gif" styleClass="leftArrowIcon" onclick="addRemoveRoles('Remove'); return false;" style="cursor: pointer;margin-bottom:3%;" />
+                                                                        <br/>
+                                                                        <apex:outputText >Remove</apex:outputText>
+                                                                    </td>
+                                                                    <td class="selectCell">
+                                                                        <apex:selectList value="{!selectedRolesList}" size="10" styleClass="multiselectStyle selectOpt" multiselect="true">
+                                                                            <apex:selectOptions value="{!selectedRolesOpt}" />
+                                                                        </apex:selectList>
+                                                                    </td>
+                                                                </tr>
+                                                            </table>
+                                                        </apex:outputPanel>
+                                                    </td>
+                                                </tr>
+                                            </apex:outputPanel>
+                                            <tr class="bgWhite">
+                                                <td>
+                                                    <apex:outputLabel style="font-weight: 600;" value="By Group" />
+                                                </td>
+                                                <td>
+                                                    <apex:selectList value="{!selectedGroup}" size="1" styleClass="item selectOpt" onchange="changeGroup();return false;">
+                                                        <apex:selectOptions value="{!groups}" />
+                                                    </apex:selectList>
+                                                    <br/>
+                                                    <apex:outputPanel layout="None" rendered="{!!(fromGroupOpt.size > 0 ) && !(selectedGroupOpt.size > 0 ) && selectedGroup!= '--None--'}">
+                                                        No Users found for this Group.
+                                                    </apex:outputPanel>
+                                                </td>
+                                            </tr>
+                                            <apex:outputPanel layout="none" rendered="{! selectedGroup != '--None--'}">
+                                                <tr class="bgWhite">
+                                                    <td colspan="2">
+                                                        <apex:outputPanel layout="None" rendered="{!fromGroupOpt.size > 0 || selectedGroupOpt.size > 0 }">
+                                                            <table class="tbl">
+                                                                <tr>
+                                                                    <td class="selectCell" width="40px">
+                                                                        <apex:selectList value="{!fromGroupList}" size="10" styleClass="multiselectStyle selectOpt" multiselect="true">
+                                                                            <apex:selectOptions value="{!fromGroupOpt}" />
+                                                                        </apex:selectList>
+                                                                    </td>
+                                                                    <td class="buttonCell" style="vertical-align:middle;text-align:-webkit-center;">
+                                                                        <apex:outputText >Add</apex:outputText>
+                                                                        <br/>
+                                                                        <apex:image url="/s.gif" styleClass="rightArrowIcon" onclick="addRemoveGroup('Add'); return false;" style="cursor: pointer;margin-bottom:8%;margin-top:3%;" />
+                                                                        <br/>
+                                                                        <apex:image url="/s.gif" styleClass="leftArrowIcon" onclick="addRemoveGroup('Remove'); return false;" style="cursor: pointer;margin-bottom:3%;" />
+                                                                        <br/>
+                                                                        <apex:outputText >Remove</apex:outputText>
+                                                                    </td>
+                                                                    <td class="selectCell">
+                                                                        <apex:selectList value="{!selectedGroupList}" size="10" styleClass="multiselectStyle selectOpt" multiselect="true">
+                                                                            <apex:selectOptions value="{!selectedGroupOpt}" />
+                                                                        </apex:selectList>
+                                                                    </td>
+                                                                </tr>
+                                                            </table>
+                                                        </apex:outputPanel>
+                                                    </td>
+                                                </tr>
+                                            </apex:outputPanel>
+                                            <tr class="bgWhite">
+                                                <td></td>
+                                                <td>
+                                                    <apex:commandLink styleClass="btn-enroll" action="{!enrollSelectedUsers}" value="Enroll" />
+                                                </td>
+                                            </tr>
+                                        </table>
+                                </div>
+                                
+                                <div>                                
+                                    <div style="float: left;width: 100%;" class="status">
+                                        <div class = "status-header">Already Enrolled Users</div>
+                                        <apex:outputPanel layout="None" rendered="{!crsEnrolledUsers.size > 0}">
+                                            <ul>
+                                                <apex:repeat value="{!crsEnrolledUsers}" var="user">
+                                                    <li class="list__item">
+                                                        <apex:outputText value="{!user.name}" />
+                                                    </li>
+                                                </apex:repeat>
+                                            </ul>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel layout="none" rendered="{!!(crsEnrolledUsers.size > 0)}">
+                                            <p>There are no users currently enrolled in this course.</p>
+                                        </apex:outputPanel>
+                                    </div>
+                                    <!--
+                                    <div style="float: right;" class="status">
+                                        <div class = "status-header">Course Completed By</div>
+                                        
+                                        <apex:outputPanel layout="None" rendered="{!crsCompletedUsers.size > 0}">
+                                            <ul>
+                                                <apex:repeat value="{!crsCompletedUsers}" var="user">
+                                                    <li class="list__item">
+                                                        <apex:outputText value="{!user.name}" />
+                                                    </li>
+                                                </apex:repeat>
+                                            </ul>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel layout="none" rendered="{!!(crsCompletedUsers.size > 0)}">
+                                            <p>There are no users who have completed this course.</p>
+                                        </apex:outputPanel>
+                                    </div>-->
+                                </div>
+                                <div>
+                                </div>
+                                
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                    <script src="{!URLFOR($Resource.edcast__EdCast_Resource,'js/modernizr.js')}"/>
+                    <c:edcastJS />
+                     
+                </apex:outputPanel>
+                
+            </apex:form>
+        </div>
+    </body>
+</html>
+</apex:page>
