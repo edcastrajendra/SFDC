@@ -123,6 +123,7 @@ global class AutoCompleteController {
    		}
          }
       }
+      
         return jsonResult;
     }
 }
