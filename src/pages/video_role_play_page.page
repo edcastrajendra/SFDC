@@ -1,0 +1,1504 @@
+<apex:page standardStylesheets="false" sidebar="false" controller="VideoRolePlayController"> 
+<html xmlns="https://www.w3.org/2000/svg" xmlns:xlink="https://www.w3.org/1999/xlink">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link href="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.1/themes/ui-darkness/jquery-ui.min.css" rel="stylesheet"/>
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+	<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.1/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="{!URLFOR($Resource.Assets_SU,'bootstrap/css/bootstrap.css')}"/>
+    <link rel="stylesheet" href="{!URLFOR($Resource.Assets_SU,'Styles/Main.css')}"/>
+    <link rel="stylesheet" href="{!URLFOR($Resource.Assets_SU,'Styles/star_stylesheet.css')}"/>
+    <title>Index</title>
+<script type="text/javascript">
+     var maxBlockSize = 256 * 1024;//Each file will be split in 256 KB.
+        var numberOfBlocks = 1;
+        var selectedFile = null;
+        var currentFilePointer = 0;
+        var totalBytesRemaining = 0;
+        var blockIds = new Array();
+        var blockIdPrefix = "block-";
+        var submitUri = null;
+        var bytesUploaded = 0;
+        var percentComplete = 0;
+        $(document).ready(function () {
+            $("#output").hide();
+            $("#file").bind('change', handleFileSelect);
+            if (window.File && window.FileReader && window.FileList && window.Blob) {
+                // Great success! All the File APIs are supported.
+            } else {
+                alert('The File APIs are not fully supported in this browser.');
+            }
+        });
+         
+        //Read the file and find out how many blocks we would need to split it.
+        function handleFileSelect(e) {
+            percentComplete=0;
+            
+            maxBlockSize = 256 * 1024;
+            currentFilePointer = 0;
+            totalBytesRemaining = 0;
+            var files = e.target.files;
+            selectedFile = files[0];
+           $("#list-video").hide();
+            $("#output").show();
+            console.log(selectedFile.name);
+            console.log(selectedFile.size);
+            console.log(selectedFile.type);
+            var fileSize = selectedFile.size;
+            if (fileSize < maxBlockSize) {
+                maxBlockSize = fileSize;
+            }
+            totalBytesRemaining = fileSize;
+            if (fileSize % maxBlockSize == 0) {
+                numberOfBlocks = fileSize / maxBlockSize;
+            } else {
+                numberOfBlocks = parseInt(fileSize / maxBlockSize, 10) + 1;
+            }
+            var baseUrl = $("#sasUrl").val();
+            var indexOfQueryStart = baseUrl.indexOf("?");
+            submitUri = baseUrl.substring(0, indexOfQueryStart)  + baseUrl.substring(indexOfQueryStart);
+            uploadFileInBlocks();      
+        }
+        var reader = new FileReader();
+        reader.onloadend = function (evt) {
+            if (evt.target.readyState == FileReader.DONE) {
+                var uri = submitUri + '&comp=block&blockid=' + blockIds[blockIds.length - 1];
+                var requestData = new Uint8Array(evt.target.result);
+                $.ajax({
+                    url: uri,
+                    type: "PUT",
+                    data: requestData,
+                    processData: false,
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader('x-ms-blob-type', 'BlockBlob');
+                    },
+                    success: function (data, status) {
+                        bytesUploaded += requestData.length;
+                        percentComplete = ((parseInt(bytesUploaded) / parseInt(selectedFile.size)) * 100).toFixed(0);
+                         console.log('percent='+percentComplete);
+                        if(percentComplete <= 100){
+                         $(".progressbar-video").width(percentComplete+"%");   
+                         $("#fileUploadProgress").text(percentComplete+" %");   
+                            }
+                       if(percentComplete == 100){
+                           completeUploadVideo();
+                           $('#video_role_play_video').hide();
+                           $('#video_role_play_video_second').show();
+                           }
+                        uploadFileInBlocks();
+                    },
+                    error: function(xhr, desc, err) {
+                    }
+                });
+            }
+        };
+        function uploadFileInBlocks() {
+            if (totalBytesRemaining > 0) {
+                console.log("current file pointer = " + currentFilePointer + " bytes read = " + maxBlockSize);
+                var fileContent = selectedFile.slice(currentFilePointer, currentFilePointer + maxBlockSize);
+                var blockId = blockIdPrefix + pad(blockIds.length, 6); 
+                console.log("block id = " + blockId);
+                blockIds.push(btoa(blockId));
+                reader.readAsArrayBuffer(fileContent);
+                currentFilePointer += maxBlockSize;
+                totalBytesRemaining -= maxBlockSize;
+                if (totalBytesRemaining < maxBlockSize) {
+                    maxBlockSize = totalBytesRemaining;
+                }
+            } else {
+                commitBlockList();
+            }
+        }
+        function commitBlockList() {
+            var uri = submitUri + '&comp=blocklist';
+            console.log(uri);
+            var requestBody = '<?xml version="1.0" encoding="utf-8"?><BlockList>';
+            for (var i = 0; i < blockIds.length; i++) {
+                requestBody += '<Latest>' + blockIds[i] + '</Latest>';
+            }
+            requestBody += '</BlockList>';
+            $.ajax({
+                url: uri,
+                type: "PUT",
+                data: requestBody,
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader('x-ms-blob-content-type', selectedFile.type);
+                },
+                success: function (data, status) {
+                },
+                error: function (xhr, desc, err) {
+                    console.log(desc);
+                    console.log(err);
+                }
+            });
+ 
+        }
+        function pad(number, length) {
+            var str = '' + number;
+            while (str.length < length) {
+                str = '0' + str;
+            }
+            return str;
+        }
+    var arrIndex = new Array();
+    var guidemeIndex = new Array();
+    function appendText(text){ 
+    arrIndex.push(text);      
+    $('#title').append(text);
+    }
+    function guidemeText(text){      
+    guidemeIndex.push(text);          
+     $('#title').append(text);   
+    }
+   function backByDiv(){ 
+   if(guidemeIndex.length == 1){
+       $('#title').html('Video Role Play');
+       $('#video_role_play').show();
+       $('#perfect_the_demo_container').hide();
+       guidemeIndex.length--;
+       }
+   if(guidemeIndex.length == 2){
+       $('#title').html('Video Role Play'+guidemeIndex[0]);
+       $('#perfect_the_demo_container').show();
+       $('#perfect_the_demo_categories').hide();
+       guidemeIndex.length--;
+       }
+    if(guidemeIndex.length == 3){
+       $('#title').html('Video Role Play'+guidemeIndex[0]+guidemeIndex[1]);
+       $('#perfect_the_demo_categories').show(); 
+       $('#perfect_the_demo_categories_second').hide();  
+       guidemeIndex.length--;
+       }
+       if(guidemeIndex.length == 4){
+       $('#title').html('Video Role Play'+guidemeIndex[0]+guidemeIndex[1]+guidemeIndex[2]);
+       $('#perfect_the_demo_categories_second').show(); 
+       $('#perfect_the_demo_tours').hide();  
+       guidemeIndex.length--;
+       }
+       if(guidemeIndex.length == 5){
+       $('#title').html('Video Role Play'+guidemeIndex[0]+guidemeIndex[1]+guidemeIndex[2]+guidemeIndex[3]);
+       $('#perfect_the_demo_tours').show(); 
+       $('#perfect_the_demo_steps').hide();  
+       guidemeIndex.length--;
+       }
+   if(arrIndex.length == 1){ 
+       $('#title').html('Video Role Play');
+       $('#video_role_play').show();
+       $('#video_role_play_second').hide();
+       arrIndex.length--;
+      }
+       if(arrIndex.length == 2){ 
+       $('#title').html('Video Role Play'+arrIndex[0]);
+       $('#video_role_play_second').show();
+       $('#perfect_the_picth').hide();
+       arrIndex.length--;    
+      }
+       if(arrIndex.length == 3){ 
+       $('#title').html('Video Role Play'+arrIndex[0]+arrIndex[1]);
+       $('#perfect_the_picth').show();
+       $('#video_role_play_video').hide();
+       $('#share_video_container').hide();    
+       arrIndex.length--;    
+      }
+       
+     }
+   $(document).ready(function() {     
+     $("#guideme_tours").click(function(e){
+        $('#perfect_the_demo_container').hide();
+        $('#perfect_the_demo_categories').show();
+    }); 
+    $("#video-option").click(function(e){
+        $('#list-video').show();
+    });    
+    $("#perfect_the_pitch").click(function(e){
+        $('#video_role_play').hide();
+        $('#video_role_play_second').show();
+    }); 
+       $("#perfect_the_demo").click(function(e){
+        $('#video_role_play').hide();
+        $('#perfect_the_demo_container').show();
+    }); 
+        $("#your_pitch").click(function(e){
+        $('#video_role_play_second').hide();
+        $('#perfect_the_picth').show();
+    });
+       $("#record_1_minute_pitch").click(function(e){
+        $('#perfect_the_picth').hide();
+        $('#video_role_play_video').show();
+    });
+});
+function myFunctionList() {
+document.getElementById("dropdown-list").classList.toggle("show");
+        }
+function getShare(){
+$('#review_images').hide();
+$('#save_share_delete').show();   
+}
+function share(){
+$('#save_share_delete').hide(); 
+$('.video_text').hide();    
+$('#share').show();    
+}   
+function getVideoById(id){
+      $('#video_frame').show();
+         $.ajax({
+                url: 'https://salusuapiprod-stage.azurewebsites.net/client/v1/user/refreshtoken',
+                type: "POST",
+                beforeSend: function (xhr) {
+                     xhr.setRequestHeader('ApiKey','19b75efe43c95a2b66319d6e6529a27c233e101ccb70c32bd785880b35ed9247');
+                     xhr.setRequestHeader('RefreshToken','{!refreshtoken}');
+                     xhr.setRequestHeader('Content-Type','application/json');
+                },
+                success: function (data, status) {
+                var accesstoken = data.message.session.accesstoken;
+                 console.log(accesstoken); 
+        $.ajax({
+                url: 'https://salusuapiprod-stage.azurewebsites.net/client/v1/file/video?video_id='+id,
+                type: "GET",
+                beforeSend: function (xhr) {
+                     xhr.setRequestHeader('ApiKey','19b75efe43c95a2b66319d6e6529a27c233e101ccb70c32bd785880b35ed9247');
+                     xhr.setRequestHeader('AccessToken',accesstoken);
+                     xhr.setRequestHeader('Content-Type','application/json');
+                },
+                success: function (data, status) {
+                    if(data.error == false){
+                        console.log(data.message.video_url);
+                        showVideoPopup(data.message.video_url);
+                        }
+                },
+                error: function (xhr, desc, err) {
+                    console.log(desc);
+                    console.log(err);
+                 }
+               });
+                },
+                error: function (xhr, desc, err) {
+                    console.log(desc);
+                    console.log(err);
+                }
+            });
+        
+        }
+function showVideoPopup(videoURL){
+        console.log('inside function:::::::::'+videoURL);
+        $("#dialog").dialog({
+				autoOpen: false,
+				resizable: false,
+				width: "auto"
+			});
+         $("#dialog").html('<iframe width="600" height="300" src="'+videoURL+'" frameborder="0" ></iframe>');
+         $("#dialog").dialog("option", "position", {
+					my: "center",
+					at: "center",
+					of: window
+				});
+				if ($("#dialog").dialog("isOpen") == false) {
+					$("#dialog").dialog("open");
+				}
+        }    
+function speechAdd(){
+var title = $('#video-title').val();
+var id = $('#video-id').val(); 
+var desc = $('#video-desc').val();  
+var request_body='title='+title+'&description='+desc+'&video_id='+id;  
+        $.ajax({
+                url: 'https://salusuapiprod-stage.azurewebsites.net/client/v1/user/refreshtoken',
+                type: "POST",
+                beforeSend: function (xhr) {
+                     xhr.setRequestHeader('ApiKey','19b75efe43c95a2b66319d6e6529a27c233e101ccb70c32bd785880b35ed9247');
+                     xhr.setRequestHeader('RefreshToken','{!refreshtoken}');
+                     xhr.setRequestHeader('Content-Type','application/json');
+                },
+                success: function (data, status) {
+               var accesstoken = data.message.session.accesstoken; 
+               console.log(accesstoken);     
+          $.ajax({
+                url: "https://salusuapiprod-stage.azurewebsites.net/client/v1/speech/add",
+                type: "POST",
+                data: request_body,
+                beforeSend: function (xhr) {
+                     xhr.setRequestHeader('ApiKey','19b75efe43c95a2b66319d6e6529a27c233e101ccb70c32bd785880b35ed9247');
+                     xhr.setRequestHeader('AccessToken',accesstoken);
+                     xhr.setRequestHeader('Content-Type','application/json');
+                },
+                success: function (data, status) {
+                    console.log(JSON.stringify(data));
+                    $('#video-info').hide();
+                    $('#save_share_delete').show();
+                },
+                error: function (xhr, desc, err) {
+                    console.log(desc);
+                    console.log(err);
+                }
+            });
+              },
+                error: function (xhr, desc, err) {
+                    console.log(desc);
+                    console.log(err);
+                }
+            }); 
+    
+}
+    
+ function getSpeechList(page){
+           $.ajax({
+                url: 'https://salusuapiprod-stage.azurewebsites.net/client/v1/user/refreshtoken',
+                type: "POST",
+                beforeSend: function (xhr) {
+                     xhr.setRequestHeader('ApiKey','19b75efe43c95a2b66319d6e6529a27c233e101ccb70c32bd785880b35ed9247');
+                     xhr.setRequestHeader('RefreshToken','{!refreshtoken}');
+                     xhr.setRequestHeader('Content-Type','application/json');
+                },
+                success: function (data, status) {
+                var accesstoken = data.message.session.accesstoken;
+                 console.log(accesstoken);    
+           $.ajax({
+                url: 'https://salusuapiprod-stage.azurewebsites.net/client/v1/speech/list?page='+page,
+                type: "GET",
+                beforeSend: function (xhr) {
+                     xhr.setRequestHeader('ApiKey','19b75efe43c95a2b66319d6e6529a27c233e101ccb70c32bd785880b35ed9247');
+                     xhr.setRequestHeader('AccessToken',accesstoken);
+                     xhr.setRequestHeader('Content-Type','application/json');
+                },
+                success: function (data, status) {
+                    console.log(data.message.speech);
+                    var jsonArray = data.message.speech;
+                    var result='';
+                   for(var i=0; i< jsonArray.length; i++){
+                       var creation_date = dateConverter(jsonArray[i].creation_date);
+                       var creator_name = jsonArray[i].creator_name;
+                       var description =  jsonArray[i].description;
+                       var rating = jsonArray[i].rating;
+                       var speech_id = jsonArray[i].speech_id;
+                       var title = jsonArray[i].title;
+                       var video_id = jsonArray[i].video_id;
+                       var video_thumb = jsonArray[i].video_thumb;
+                    result += '<div class="col-lg-6 col-md-6 col-sm-6 box"><div style=" background-color: #f7f6f6; width: 340px;">'+
+                  '<div style="float:right;">'+
+                    '<p>'+
+                    '<span class="starRating">'+
+                    '<input id="rating5" type="checkbox"  checked name="rating" value="5"/>'+
+                    '<label for="rating5">5</label>'+
+                    '<input id="rating4" type="checkbox"  checked name="rating" value="4"/>'+
+                    '<label for="rating4">4</label>'+
+                    '<input id="rating3" type="checkbox"  checked name="rating" value="3"/>'+
+                    '<label for="rating3">3</label>'+
+                    '<input id="rating2" type="checkbox"  checked name="rating" value="2"/>'+
+                    '<label for="rating2">2</label>'+
+                    '<input id="rating1" type="checkbox"  checked name="rating" value="1"/>'+
+                   ' <label for="rating1">1</label>'+
+                    '</span>'+
+                   ' </p>'+
+                  '</div>'+
+                   '<div style="font-weight: bold;color: #585454;">'+
+                   title+  
+                 ' </div>'+
+                   '<div style="width: 100%;height: 15px;color:#585454;margin:2px;font-size: 10px;font-weight: bold">'+
+                      creation_date +
+                     '</div>'+
+                     '<div style="width: 325px;height: 145px;">'+
+                           '<a href="javascript:getVideoById('+video_id+');"> <img src="'+video_thumb+'" height="145" width="325" style="margin: 5px;"/></a>'+
+                     '</div>'+
+                      '<div style="margin: 15px;height: 25px;">'+
+                          '<div class="small-circle">'+
+                            rating+
+                          '</div>'+
+                          '<div style="position: absolute;top: 194px;left: 270px;color:#585454;font-weight: bold;font-size: 12px;">'+
+                           '  Shared Trainer <img src="{!URLFOR($Resource.Assets_SU,'Assets/arrow.png')}"/>'+
+                          '</div>'+
+                      '</div>'+
+                  '</div></div>';
+                      
+                   }
+                    $('#share_video').html(result);
+                    $('#share_video_container').show();
+                },
+                error: function (xhr, desc, err) {
+                    console.log(desc);
+                    console.log(err);
+                }
+             });     
+                },
+                error: function (xhr, desc, err) {
+                    console.log(desc);
+                    console.log(err);
+                }
+            });
+
+}    
+function dateConverter(timestamp){
+var date = new Date(timestamp * 1000);
+var formattedDate = ('0' + date.getDate()).slice(-2) + '/' + ('0' + (date.getMonth() + 1)).slice(-2) + '/' + date.getFullYear() + ' ' + ('0' + date.getHours()).slice(-2) + ':' + ('0' + date.getMinutes()).slice(-2);
+return formattedDate;
+}      
+function shareVideo(){
+  var groupId= [];   
+  var userId = [];
+    $.each($("input[name='group_id']:checked"), function(){            
+                groupId.push($(this).val());
+            }); 
+     $.each($("input[name='user_id']:checked"), function(){            
+                userId.push($(this).val());
+            }); 
+    $('#video_role_play_video_second').hide();
+    getSpeechList(1);
+}
+function getUserByGroupId(groupId){
+      $('#groups_user').toggle();
+           $.ajax({
+                url: 'https://salusuapiprod-stage.azurewebsites.net/client/v1/user/refreshtoken',
+                type: "POST",
+                beforeSend: function (xhr) {
+                     xhr.setRequestHeader('ApiKey','19b75efe43c95a2b66319d6e6529a27c233e101ccb70c32bd785880b35ed9247');
+                     xhr.setRequestHeader('RefreshToken','{!refreshtoken}');
+                     xhr.setRequestHeader('Content-Type','application/json');
+                },
+                success: function (data, status) {
+               var accesstoken = data.message.session.accesstoken;
+                 console.log(accesstoken);    
+            $.ajax({
+                url: 'https://salusuapiprod-stage.azurewebsites.net/client/v1/user/peers?group_id='+groupId+'&page=1',
+                type: "GET",
+                beforeSend: function (xhr) {
+                     xhr.setRequestHeader('ApiKey','19b75efe43c95a2b66319d6e6529a27c233e101ccb70c32bd785880b35ed9247');
+                     xhr.setRequestHeader('AccessToken',accesstoken);
+                     xhr.setRequestHeader('Content-Type','application/json');
+                },
+                success: function (data, status) {
+                    var result='';
+                    console.log(data);
+                    var jsonArray = data.message.peers;
+                    console.log(jsonArray.length);
+                    for(var i=0; i< jsonArray.length; i++){
+                        result += '<div style="margin-left: 50px;"><input type="checkbox" id="user_id" name="user_id" value="'+jsonArray[i].user_id+'"/> <img style="border-radius: 50%;width: 30px;height: 30px;margin: 15px;margin-bottom: 16px;" src="'+jsonArray[i].image_url+'"/> '+jsonArray[i].first_name+' '+jsonArray[i].first_name+'</div>';
+                    }
+                  $('#groups_user').html(result); 
+                },
+                error: function (xhr, desc, err) {
+                    console.log(desc);
+                    console.log(err);
+                }
+            });
+                },
+                error: function (xhr, desc, err) {
+                    console.log(desc);
+                    console.log(err);
+                }
+            }); 
+}
+function getCategoryByCategoryId(id){
+$('#perfect_the_demo_categories').hide();
+$('#perfect_the_demo_categories_second').show();    
+getCategoriesByCategoryId(id);    
+}
+function getToursByCategoryId(id){
+$('#perfect_the_demo_categories_second').hide(); 
+$('#perfect_the_demo_tours').show();    
+getTourByCategoryId(id);
+}
+function getStepsByTourId(id){
+$('#perfect_the_demo_tours').hide(); 
+$('#perfect_the_demo_steps').show(); 
+getStepByTourId(id);
+}
+   
+</script>
+<style>
+.img_box{
+    background-color: #ffffff;
+    box-shadow: 0px 0px 1px #888888;
+    margin: 20px auto;
+}    
+.point{
+    display: inline-block;
+    width: 24px;
+    font: bold 14px/24px sans-serif;
+    text-align: center;
+    text-indent: -1px;
+    margin-right: 1px;
+    border-radius: 100%;
+    text-decoration: none;
+    background: #1e87dd;
+    color:white;
+}    
+#title {
+margin-top: 10px;
+color: #6495ed;
+font-weight: bold;
+text-overflow: ellipsis;
+overflow: hidden;
+white-space: nowrap;    
+}
+#perfect_the_demo_play_video{
+min-height: 500px;
+display:none;    
+}
+#perfect_the_demo_steps{
+min-height: 600px;
+display:none;    
+}    
+#perfect_the_demo_categories_second{
+min-height: 500px;   
+display:none;     
+}
+#perfect_the_demo_tours{
+min-height: 500px;
+display:none;    
+}    
+#perfect_the_demo_categories{
+min-height: 500px;
+display:none;
+}    
+#perfect_the_demo_container{
+           min-height: 500px;
+           padding: 50px;
+           display:none;
+       }
+#share_video_container{
+         min-height:600px;background-color:white;display:none;
+        } 
+#video_role_play {
+        min-height:500px;padding:50px;
+        }
+#video_role_play_second{
+          min-height:500px;
+          padding:90px;
+          display:none;
+        }
+#perfect_the_picth{
+         min-height:500px;
+          display:none;
+        }
+#video_role_play_video{
+          min-height:500px;
+          display:none;
+        }
+#video_role_play_video_second{
+         min-height:500px;
+          padding:30px;
+          display:none;
+          padding-left: 5%;
+        }
+.video_text{
+       text-align: center;
+       padding: 15px;
+       font-weight: bold;
+       color: #868181;
+        }
+#review_images{
+       text-align: center;
+        }
+#review_images img{
+           padding:5px;
+        }
+#save_share_delete{
+         text-align: center;
+         display:none;
+        }
+#save_share_delete img {
+           width: 45px;
+           height: 45px;
+           margin: 15px;
+        }
+#video_role_play_video_share{
+         display:none;
+         min-height:500px;
+        }
+.share_image{
+        padding:5px;
+        padding-left: 10px;
+        position: absolute;
+        }
+.share_image img {
+        border-radius: 50%;width: 65px;height: 65px;border-width: 1px;border-color: #757575;; border-style: solid; 
+        }
+.inner-text{
+     display: flex;
+    margin: auto;
+    justify-content: center;
+    align-items: center;
+    margin-left: 65px;
+    margin-right: 5px;
+    color: #757575;
+        }
+.share{
+        float: left;color: #757575;
+        }
+#video_role_play_grid{
+         display:none;
+         min-height:500px;
+        background-color:white;
+        }
+.perfect-the-picth-box{
+        width: 240px;
+        background-color:white;
+        border-left: #696363;
+        border-left-style: solid;
+        border-left-width: 1px;
+        border-bottom: #696363;
+        border-bottom-style: solid;
+        border-bottom-width: 1px;
+        }
+.image-box{
+        margin-top:10px;
+        
+        }
+.small-circle{
+   background: #757677;
+   color: #ffffff;
+   border-radius: 50%;
+   height: 18px;
+   width: 18px;
+   right: 775px;
+   top: 30px;
+   display: flex;
+   justify-content: center;
+   font-size: 12px;     
+}
+.small-circle_one{
+   background: #3674bb;
+   border-radius: 50%;
+   height: 10px;
+   width: 10px;
+   position:absolute; 
+   right: 775px;
+   top: 30px;     
+}
+.small-circle_two{
+   background: #3674bb;
+   border-radius: 50%;
+   height: 10px;
+   width: 10px;
+   position:absolute; 
+   right: 775px;
+   top: 270px;     
+}
+.dropdown{
+        background-color:#0082e0;width:150px;height:175px;position:absolute;display:none;left: 223px;
+        }
+.triangle-down {
+  width: 0; 
+  height: 0; 
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid #3a73b5;
+  float:right; 
+  margin-top: 8px;      
+}
+.btn-file {
+    position: relative;
+    overflow: hidden;
+}
+.btn-file input[type=file] {
+    position: absolute;
+    top: 0;
+    right: 0;
+    min-width: 100%;
+    min-height: 100%;
+    font-size: 100px;
+    text-align: right;
+    filter: alpha(opacity=0);
+    opacity: 0;
+    outline: none;
+    background: white;
+    cursor: inherit;
+    display: block;
+}
+
+.progress-container-video{
+width: 100%;
+    height: 14px;
+    position: relative;
+    background-color: #e8e2e2;
+    border-radius: 20px !important;
+    top: 0px;
+    font-size: 10px;
+    color: #f2f2f2;  
+    text-align: right;
+}
+.progressbar-video{
+background-color:#008000;
+height: 100%;
+position: absolute;
+line-height: inherit;   
+    }
+#video-title {
+    background: white; 
+    border: 1px solid #DDD; 
+    border-radius: 5px; 
+    box-shadow: 0 0 5px #DDD inset; 
+    color: #666; 
+    outline: none; 
+    height:25px; 
+    width: 275px; 
+}  
+#video-desc {
+    background: white; 
+    border: 1px solid #DDD; 
+    border-radius: 5px; 
+    box-shadow: 0 0 5px #DDD inset; 
+    color: #666; 
+    outline: none; 
+    height:50px; 
+    width: 275px; 
+}   
+#video-add {
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    padding: 4px 22px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+}
+#video-info{
+margin-left: 400px;
+}
+#search-text-box{
+width: 200px;
+    box-sizing: border-box;
+    border: 2px solid #ccc;
+    border-radius: 20px;
+    font-size: 12px;
+    background-color: white;
+    background-image: url('{!URLFOR($Resource.Assets_SU,'Assets/search.png')}');
+    background-position: 10px 4px;
+    background-repeat: no-repeat;
+    padding: 3px 10px 3px 40px;
+    -webkit-transition: width 0.4s ease-in-out;
+    transition: width 0.4s ease-in-out;
+    left:auto; right:0px;
+}
+p {
+        margin:0;
+        }
+       div {
+        margin:0;
+        }
+    .rating {
+    float:left;
+        }
+        .rating:not(:checked) > input {
+            position:absolute;
+            top:-9999px;
+            clip:rect(0,0,0,0);
+        }
+        .rating:not(:checked) > label {
+            float:right;
+            width:1em;
+            padding:0 .1em;
+            overflow:hidden;
+            white-space:nowrap;
+            cursor:pointer;
+            font-size:150%;
+            line-height:1.2;
+            color:#646060;
+            text-shadow:1px 1px #bbb, 2px 2px #666, .1em .1em .2em rgba(0,0,0,.5);
+        }
+        .rating:not(:checked) > label:before {
+            content: '★ ';
+        }
+        .rating > input:checked ~ label {
+            color: #0f7be4;
+            text-shadow:1px 1px #282116, 2px 2px #43413f, .1em .1em .2em rgba(0,0,0,.5);
+        }
+        .rating:not(:checked) > label:hover,
+        .rating:not(:checked) > label:hover ~ label {
+            color: gold;
+            text-shadow:1px 1px goldenrod, 2px 2px #B57340, .1em .1em .2em rgba(0,0,0,.5);
+        }
+        .rating > input:checked + label:hover,
+        .rating > input:checked + label:hover ~ label,
+        .rating > input:checked ~ label:hover,
+        .rating > input:checked ~ label:hover ~ label,
+        .rating > label:hover ~ input:checked ~ label {
+            color: #ea0;
+            text-shadow:1px 1px goldenrod, 2px 2px #B57340, .1em .1em .2em rgba(0,0,0,.5);
+        }
+        .rating > label:active {
+            position:relative;
+            top:2px;
+            left:2px;
+        }
+#share_popup_window{
+display: none;
+position: absolute;
+z-index: 1000;
+width: 50%;  
+height:600px;  
+background: white;
+border-bottom: 1px solid #aaa;
+border-radius: 40px;
+box-shadow: 0 3px 9px rgba(0, 0, 0, 0.5);
+border: 1px solid rgba(0, 0, 0, 0.1);
+background-clip: padding-box;
+margin-left:115px;    
+}
+.cls-cat-list-home {
+    vertical-align: text-bottom;
+    box-sizing: border-box;
+    border-radius: 5px;
+    text-decoration: none;
+    color: #575757;
+    padding: 15px;
+} 
+.cls-cat-div {
+    text-align: center;
+    margin: 5px 0;
+    cursor: pointer;
+}
+.txt-center {
+    text-align: center;
+}
+.cls-cat-div-img {
+    background: #e8e8e8;
+    padding: 10px;
+    width: 80px;
+    height: 80px;
+    border-radius: 50px;
+}   
+.cls-cat-div p {
+    color: #1b7bee;
+    margin: 0;
+    padding: 5px 0;
+} 
+</style>
+</head>
+<body>
+     <div id="dialog"></div>
+    <input type="hidden" id="assetId" value="{!asset_id}"/>
+    <input type="hidden" id="locatorId" value="{!locator_id}"/>
+    <input type="hidden" id="accessPolicyId" value="{!access_policy_id}"/>
+     <input type="hidden" id="sasUrl" value="{!locator_url}"/>  
+    <div  style="background-color:#f5f5f5; margin-top: -10px;margin-left: -10px;margin-right: -10px;">
+        <div class="header" id="header">
+        <div class="header-first">
+                <div class="col-lg-8 col-md-8 col-sm-8 col-xs-8 col-lg-offset-2 col-md-offset-2 col-sm-offset-2 col-xs-offset-2">
+                    <div style="width:200px; margin:7px auto;">
+                        <input type="text" id="search-text-box"  name="search" placeholder="Search here"/>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
+                    <div class="notification">
+                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/01.png')}" />
+                    </div>
+                </div>
+            </div>
+        <div class="header-second">
+                <div class="col-lg-9 col-md-9 col-sm-9 col-xs-9">
+                    <div class="site-map">
+                        <div onclick="backByDiv()">
+                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/back.png')}" width="30" height="30" style="margin-top:-5px;transition: all .3s;cursor: pointer;float:left;"/>    
+                        </div>
+                        <div id="title">Video Role Play </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3">
+                    <div class="grid-type">
+                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/02.png')}" />
+                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/03.png')}" />
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="container">
+        <div  id="video_role_play">
+            <div class="row">
+                <div class="col-lg-3 col-lg-offset-2 col-md-4 col-sm-6 box" id="perfect_the_pitch">
+                    <div class="img-box">
+                            <div style="position:relative;" onclick="appendText(' > Perfect The Pitch')">
+                                 <img src="{!URLFOR($Resource.Assets_SU,'Assets/perfect-the-pitch.png')}" class="img-responsive" style="width:100%;" />                             
+                            </div>
+                        <div style="height:30px; line-height: 20px; padding: 5px; color: #888888;text-align: center;font-weight: bold;background: #e5e6e7;">
+                                 Perfect The Pitch
+                            </div>
+                    </div>
+                </div> 
+                <div class="col-lg-3 col-md-4 col-sm-6 box" id="perfect_the_demo">
+                    <div class="img-box">
+                            <div style="position:relative;" onclick="guidemeText(' > Perfect The Demo')">
+                                <img src="{!URLFOR($Resource.Assets_SU,'Assets/perfect-the-demo.png')}" class="img-responsive" style="width:100%;" />                            
+                            </div>
+                         <div style="height:30px; line-height: 20px; padding: 5px; color: #888888;text-align: center;font-weight: bold;background: #e5e6e7;">
+                                 Perfect The Demo
+                            </div>
+                    </div>
+                </div> 
+        </div>
+        </div>
+        <div  id="video_role_play_second">
+            <div class="row">
+                <div class="col-lg-3 col-md-4 col-sm-6 box">
+                    <div style="margin: 20px auto;">                       
+                    <div style="position:relative;" id="your_pitch"  onclick="appendText(' > Your Pitch')">
+                         <img src="{!URLFOR($Resource.Assets_SU,'Assets/youpitch_btn.png')}" class="img-responsive" style="width:100%;" />   
+                    </div>
+                     <div style="height:30px; line-height: 20px; padding: 5px; color: #888888;text-align: center">
+                                 Your Pitch
+                            </div>    
+                </div>
+                </div>
+                <div class="col-lg-3 col-md-4 col-sm-6 box">
+                    <div style="margin: 20px auto;">
+                            <div style="position:relative;" id="our_pitch">
+                                <img src="{!URLFOR($Resource.Assets_SU,'Assets/ourpitch_btn.png')}" class="img-responsive" style="width:100%;" />                            
+                            </div>
+                            <div style="height:30px; line-height: 20px; padding: 5px; color: #888888;text-align: center">
+                                    Our Pitch
+                            </div>
+                    </div>
+                </div> 
+                
+                 <div class="col-lg-3 col-md-4 col-sm-6 box">
+                    <div style="margin: 20px auto;">
+                            <div style="position:relative;" id="community_pitch">
+                                <img src="{!URLFOR($Resource.Assets_SU,'Assets/communitypitch_btn.png')}" class="img-responsive" style="width:100%;" />                            
+                            </div>
+                           <div style="height:30px; line-height: 20px; padding: 5px; color: #888888;text-align: center">
+                                   Community Pitch
+                            </div>
+                    </div>
+                </div> 
+        </div>
+        </div>
+        <div  id="perfect_the_picth">
+            <div class="row">
+                <div class="col-lg-3 col-md-4 col-sm-6 col-xs-6 box" id="record_1_minute_pitch">
+                    <div style="margin: 20px auto;">                       
+                    <div style="position:relative;">
+                          <div class="perfect-the-picth-box"  onclick="appendText(' > Record Your 1 Minute Video')">
+                      <img src="{!URLFOR($Resource.Assets_SU,'Assets/mike.png')}" style="width 100%;margin-left: 30%;margin-top: 12%;"/>
+                      <div style="font-stretch:ultra-expanded;font-family:sans-serif;color:#36a0fe;font-weight:bold;margin:4px;margin-left: 30px;">
+                      Record Your 1 Minute Video
+                      </div>
+                   <div style="background-color:#d6d5d5;margin-top:29px;height:20%;">
+                    <img src="{!URLFOR($Resource.Assets_SU,'Assets/start.png')}" style="width 100%;margin-left: 30%;margin-top: 2%;"/> 
+                   </div>
+                   </div>  
+                    </div>
+                </div>
+             </div>
+                <div class="col-lg-3 col-md-4 col-sm-6 col-xs-6 box">
+                    <div style="margin: 20px auto;">
+                            <div style="position:relative;">
+                                    <div class="perfect-the-picth-box">
+                      <img src="{!URLFOR($Resource.Assets_SU,'Assets/mike.png')}" style="width 100%;margin-left: 30%;margin-top: 12%;"/>
+                      <div style="font-stretch:ultra-expanded;font-family:sans-serif;color:#36a0fe;font-weight:bold;margin:4px;margin-left: 30px;">
+                      Record Your 2 Minute Video
+                      </div>
+                   <div style="background-color:#d6d5d5;margin-top:29px;height:20%;">
+                    <img src="{!URLFOR($Resource.Assets_SU,'Assets/start.png')}" style="width 100%;margin-left: 30%;margin-top: 2%;"/> 
+                   </div>
+                   </div>                      
+                    </div>
+                    </div>
+                </div> 
+                
+                 <div class="col-lg-3 col-md-4 col-sm-6 col-xs-6 box">
+                    <div style="margin: 20px auto;">
+                            <div style="position:relative;">
+                                       <div class="perfect-the-picth-box">
+                      <img src="{!URLFOR($Resource.Assets_SU,'Assets/mike.png')}" style="width 100%;margin-left: 30%;margin-top: 12%;"/>
+                      <div style="font-stretch:ultra-expanded;font-family:sans-serif;color:#36a0fe;font-weight:bold;margin:4px;margin-left: 30px;">
+                      Record Your 3 Minute Video
+                      </div>
+                   <div style="background-color:#d6d5d5;margin-top:29px;height:20%;">
+                    <img src="{!URLFOR($Resource.Assets_SU,'Assets/start.png')}" style="width 100%;margin-left: 30%;margin-top: 2%;"/> 
+                   </div>
+                   </div>             
+                     </div>
+                    </div>
+                </div> 
+                
+                <div class="col-lg-3 col-md-4 col-sm-6 col-xs-6 box">
+                    <div style="margin: 20px auto;">
+                            <div style="position:relative;">
+                                       <div class="perfect-the-picth-box">
+                      <img src="{!URLFOR($Resource.Assets_SU,'Assets/mike.png')}" style="width 100%;margin-left: 30%;margin-top: 12%;"/>
+                      <div style="font-stretch:ultra-expanded;font-family:sans-serif;color:#36a0fe;font-weight:bold;margin:4px;margin-left: 30px;">
+                      Record Your 4 Minute Video
+                      </div>
+                   <div style="background-color:#d6d5d5;margin-top:29px;height:20%;">
+                    <img src="{!URLFOR($Resource.Assets_SU,'Assets/start.png')}" style="width 100%;margin-left: 30%;margin-top: 2%;"/> 
+                   </div>
+                   </div>             
+                     </div>
+                    </div>
+                </div> 
+                
+                  <div class="col-lg-3 col-md-4 col-sm-6 col-xs-6 box">
+                    <div style="margin: 20px auto;">
+                            <div style="position:relative;">
+                                       <div class="perfect-the-picth-box">
+                      <img src="{!URLFOR($Resource.Assets_SU,'Assets/mike.png')}" style="width 100%;margin-left: 30%;margin-top: 12%;"/>
+                      <div style="font-stretch:ultra-expanded;font-family:sans-serif;color:#36a0fe;font-weight:bold;margin:4px;margin-left: 30px;">
+                      Record Your 5 Minute Video
+                      </div>
+                   <div style="background-color:#d6d5d5;margin-top:29px;height:20%;">
+                    <img src="{!URLFOR($Resource.Assets_SU,'Assets/start.png')}" style="width 100%;margin-left: 30%;margin-top: 2%;"/> 
+                   </div>
+                   </div>             
+                     </div>
+                    </div>
+                </div> 
+                
+                  <div class="col-lg-3 col-md-4 col-sm-6 col-xs-6 box">
+                    <div style="margin: 20px auto;">
+                            <div style="position:relative;">
+                                       <div class="perfect-the-picth-box">
+                      <img src="{!URLFOR($Resource.Assets_SU,'Assets/mike.png')}" style="width 100%;margin-left: 30%;margin-top: 12%;"/>
+                      <div style="font-stretch:ultra-expanded;font-family:sans-serif;color:#36a0fe;font-weight:bold;margin:4px;margin-left: 30px;">
+                      Record Your 6 Minute Video
+                      </div>
+                   <div style="background-color:#d6d5d5;margin-top:29px;height:20%;">
+                    <img src="{!URLFOR($Resource.Assets_SU,'Assets/start.png')}" style="width 100%;margin-left: 30%;margin-top: 2%;"/> 
+                   </div>
+                   </div>             
+                     </div>
+                    </div>
+                </div> 
+                
+                  <div class="col-lg-3 col-md-4 col-sm-6 col-xs-6 box">
+                    <div style="margin: 20px auto;">
+                            <div style="position:relative;">
+                                       <div class="perfect-the-picth-box">
+                      <img src="{!URLFOR($Resource.Assets_SU,'Assets/mike.png')}" style="width 100%;margin-left: 30%;margin-top: 12%;"/>
+                      <div style="font-stretch:ultra-expanded;font-family:sans-serif;color:#36a0fe;font-weight:bold;margin:4px;margin-left: 30px;">
+                      Record Your 7 Minute Video
+                      </div>
+                   <div style="background-color:#d6d5d5;margin-top:29px;height:20%;">
+                    <img src="{!URLFOR($Resource.Assets_SU,'Assets/start.png')}" style="width 100%;margin-left: 30%;margin-top: 2%;"/> 
+                   </div>
+                   </div>             
+                     </div>
+                    </div>
+                </div> 
+                
+                  <div class="col-lg-3 col-md-4 col-sm-6 col-xs-6 box">
+                    <div style="margin: 20px auto;">
+                            <div style="position:relative;">
+                                       <div class="perfect-the-picth-box">
+                      <img src="{!URLFOR($Resource.Assets_SU,'Assets/mike.png')}" style="width 100%;margin-left: 30%;margin-top: 12%;"/>
+                      <div style="font-stretch:ultra-expanded;font-family:sans-serif;color:#36a0fe;font-weight:bold;margin:4px;margin-left: 30px;">
+                      Record Your 8 Minute Video
+                      </div>
+                   <div style="background-color:#d6d5d5;margin-top:29px;height:20%;">
+                    <img src="{!URLFOR($Resource.Assets_SU,'Assets/start.png')}" style="width 100%;margin-left: 30%;margin-top: 2%;"/> 
+                   </div>
+                   </div>             
+                     </div>
+                    </div>
+                </div> 
+        </div>
+        </div>
+        <div style="padding:0" id="video_role_play_video">
+            <div class="row">
+                 <div class="col-lg-12 col-md-12 col-xs-12 col-sm-12" style="padding:0">
+                 <div style="position:relative;display:flex;align-items:center;">
+                 <img src="{!URLFOR($Resource.Assets_SU,'Assets/target.png')}" class="img-responsive" style="width:100%;"/>
+                 <img id="video-option" src="{!URLFOR($Resource.Assets_SU,'Assets/record_icon.png')}" style="position:absolute;display:block;margin:auto;bottom: 0;left: 50%;transform: translate(-50%);"/> 
+                    <div id="vdo_tele_div"  style="position: absolute;display: none;margin: auto;bottom: 40px;right: 20px;text-align: center;">
+                        <img id="video-option" src="{!URLFOR($Resource.vrp,'Assets/teleprompter_withcircle_icon.png')}" style="width: 35px;height: 35px;"/>
+                      <p style="color: #fff;margin:0;font-size: 12px;">Telepromter</p>
+                     </div>
+                     </div>    
+                 </div>
+                <div id="list-video" style="display: none;position: absolute;margin:309px 485px;">
+                        <ul class="list-group" style="width: 180px;">
+                            <a class="list-group-item" style="background-color: #3674bb;color:#ffffff;" href="#">
+                            Take video by camera
+                            </a>
+                            <a class="list-group-item" style="background-color: #3674bb;color:#ffffff;" href="#">
+                                <span class="btn btn-default btn-file">
+                                    Choose video by gallery<input type="file" id="file" name="file"/>
+                                </span>
+                            </a>
+                        </ul>
+                    </div>
+                 <div id="output">
+                     <div class="progress-container-video round-xlarge">
+                        <div class="progressbar-video round-xlarge">
+                           <span id="fileUploadProgress" style="margin-right: 5px;"></span>  
+                     </div>
+                  </div>
+                 
+              </div>
+			</div>
+        </div>
+        <div id="video_role_play_video_second">
+        <apex:form >
+       <apex:outputPanel id="video_resultPanel">
+            <apex:actionStatus startText="requesting..." stopText="" id="video_myStatus" >
+                <apex:facet name="start">
+                <div class="waitingSearchDiv" id="el_loading" style="background-color: #fbfbfb;
+                       height: 100%;opacity:0.65;width:100%;"> 
+                    <div class="waitingHolder" style="top: 74.2px; width: 91px;">
+                        <img class="waitingImage" src="/img/loading.gif" title="Please Wait..." />
+                        <span class="waitingDescription">Please Wait...</span>
+                    </div>
+                </div>
+            </apex:facet>
+           </apex:actionStatus>
+            <div class="row">
+                 <div class="col-lg-12 col-md-12 col-xs-12 col-sm-12">
+                 <iframe width="100%" height="300" id="video_tag" src="{!video_url}" frameborder="0" ></iframe>
+                 </div>
+              </div>
+              <div class="row">
+             <div class="video_text"><p>what do think of your 30 sec pitch ?</p></div>
+             </div>
+             <div class="row">
+             <div id="video-info">
+                 <input type="hidden" id="video-id" name="video_id" value="{!video_id}"/>
+                 <input type="text" id="video-title" name="video_title" placeholder="Title" style="background: white;"/><br/>
+                 <textarea id="video-desc" placeholder="Description" name="video_desc"/><br/>  
+                 <input type="button" value="Submit" id="video-add" onclick="speechAdd();"/>
+              </div>  
+              <div id="save_share_delete">
+                  <img src="{!URLFOR($Resource.Assets_SU,'Assets/save_btn.png')}" style="width 100%;"/>
+                  <a href="javascript:share();"><img src="{!URLFOR($Resource.Assets_SU,'Assets/share_btn.png')}" style="width 100%;"/></a>
+                  <img src="{!URLFOR($Resource.Assets_SU,'Assets/delete_btn.png')}" style="width 100%;"/>
+             </div>
+             </div>
+           <div id="share" style="display:none">
+           <div class="row">
+                 <div class="col-lg-12 col-md-12 col-xs-12 col-sm-12">
+                     <div class="share_image">
+                     <img src="{!URLFOR($Resource.Assets_SU,'Images/dp1.jpg')}"  />    
+                     </div>
+                     <div style="display: flex;width:435px;height:40px;background-color:#ffffff;margin:20px;border-width:1px;border-color:#757575;; border-style: solid; ">
+                         <div class="inner-text">Please review my pitch and give your feedbacks..</div>
+                     </div>
+                 </div>
+             </div>
+             <div class="row" style="background-color:white;">
+                 <div class="col-lg-12 col-md-12 col-xs-12 col-sm-12">
+                     <div style="float: left;margin-left: 10px;margin-right: 150px;color: #757575;">Share with</div><div style="color: #757575;">Select All</div>
+                 </div>
+             </div>
+             <div class="row" style="background-color:white;border-bottom: 1px solid #d8d7d7;">
+                 <div class="col-lg-12 col-md-12 col-xs-12 col-sm-12">
+                     <div style="margin-right: 150px;color: #757575;margin: 10px;">Mentor</div>
+                     <div>
+                     <img src="{!URLFOR($Resource.Assets_SU,'Images/dp1.jpg')}" style="border-radius: 50%;width: 30px;height: 30px;margin: 15px;margin-top: -10px;margin-bottom: 16px;"/>
+                         <a href="javascript:shareVideo();"><img src="{!URLFOR($Resource.Assets_SU,'Assets/share.png')}" style="float: right;" /></a>
+                     </div>
+                 </div>
+             </div>
+               <div id="groups">
+                <apex:repeat value="{!dto.message.groups}" var="group">
+                <div class="row" style="background-color:white;">
+                 <div class="col-lg-12 col-md-12 col-xs-12 col-sm-12">
+                 <div style="float: left;margin-left: 10px;margin-right: 150px;color: #757575;">
+                 <div onclick="getUserByGroupId({!group.group_id});">
+                 <input type="checkbox" name="group_id" id="group_id"  value=" {!group.group_id}"/>     
+                 <img src="{!group.image_url}" style="border-radius: 50%;width: 30px;height: 30px;margin: 15px;margin-bottom: 16px;"/>
+                 {!group.title}
+                 </div> 
+                 </div>
+                 </div>
+                </div>    
+               </apex:repeat>
+               </div>
+            <div id="groups_user" style="display:none;background-color:white;">
+           </div>  
+        </div>
+       </apex:outputPanel>
+      <apex:actionFunction name="completeUploadVideo" action="{!completeUploadVideo}" reRender="video_resultPanel" status="video_myStatus">
+      </apex:actionFunction>
+      </apex:form> 
+        </div>
+        <div id="video_role_play_video_share">
+         <div class="row">
+                 <div class="col-lg-12 col-md-12 col-xs-12 col-sm-12">
+                 <iframe width="100%" height="300" id="video_tag" src="{!video_url}" frameborder="0" ></iframe>
+                 </div>
+             </div>
+             
+        </div>
+        <div id="share_video_container">
+           <a href="javascript:myFunction()"><img src="{!URLFOR($Resource.Assets_SU,'Assets/filter.png')}" class="img-responsive" /></a>
+           <div style="border-left: #3674bb;border-left-style: solid;border-left-width: 1px;margin-left: 21px;">    
+           <div class="row" id="share_video"  style="padding: 60px;" >
+           </div>
+           </div>
+          </div>    
+        </div>
+        <div id="perfect_the_demo_container">
+             <div class="row">
+                <div class="col-lg-3 col-lg-offset-2 col-md-4 col-sm-6 box">
+                    <div class="img-box" onclick="guidemeText(' > My Tours')">
+                            <div style="position:relative;border: 2px solid #009edf;">
+                                 <img src="{!URLFOR($Resource.Assets_SU,'Assets/mytour.png')}" class="img-responsive" style="width:100%;" />                             
+                            </div>
+                            <div style="text-align:center;background:whitesmoke;line-height: 20px;padding: 5px;color: #8c8989;text-align: center;font-size: 16px;font-weight: bold;">
+                                 My Tours
+                            </div>
+                    </div>
+                </div> 
+                <div class="col-lg-3 col-md-4 col-sm-6 box">
+                    <div class="img-box" id="guideme_tours" onclick="guidemeText(' >  Guideme Tours')">
+                            <div style="position:relative;border: 2px solid #009edf;">
+                                <img src="{!URLFOR($Resource.Assets_SU,'Assets/guideme.png')}" class="img-responsive" style="width:100%;" />                            
+                            </div>
+                         <div style="text-align:center;background:whitesmoke;line-height: 20px;padding: 5px;color: #8c8989;text-align: center;font-size: 16px;font-weight: bold;">
+                                    Guideme Tours
+                            </div>
+                    </div>
+                </div> 
+            </div>
+        </div>
+        <div id="perfect_the_demo_categories">
+           <div class="row">
+              <apex:repeat value="{!guidemedto}" var="dto"> 
+              <apex:repeat value="{!dto.message.categories}" var="cat">
+                <div class="col-lg-3 col-md-4 col-sm-6  txt-center cls-cat-list-home" onclick="getCategoryByCategoryId('{!cat.category_id}')">
+                <div class="cls-cat-div" onclick="guidemeText(' >  {!cat.category_title}')">
+                    <img class="cls-cat-div-img" src="{!cat.category_image}"/>
+                <p class="cls-cat-div"> {!cat.category_title}</p>
+               </div>
+              </div>
+              </apex:repeat>    
+              </apex:repeat>
+            </div>
+        </div>
+        <apex:form >
+         <div id="perfect_the_demo_categories_second">
+             <apex:outputPanel id="category_resultPanel">
+             <apex:actionStatus startText="requesting..." stopText="" id="category_myStatus" >
+                <apex:facet name="start">
+                <div class="waitingSearchDiv" id="el_loading" style="background-color: #fbfbfb;
+                       height: 100%;opacity:0.65;width:100%;"> 
+                    <div class="waitingHolder" style="top: 74.2px; width: 91px;">
+                        <img class="waitingImage" src="/img/loading.gif" title="Please Wait..." />
+                        <span class="waitingDescription">Please Wait...</span>
+                    </div>
+                </div>
+            </apex:facet>
+           </apex:actionStatus>
+          <div class="row">
+              <apex:repeat value="{!categoriesdto}" var="dto"> 
+              <apex:repeat value="{!dto.message.categories}" var="cat">
+              <div class="col-lg-3 col-md-4 col-sm-6  txt-center cls-cat-list-home" onclick="getToursByCategoryId('{!cat.category_id}')">
+                <div class="cls-cat-div" onclick="guidemeText(' >  {!cat.category_title}')">
+                    <img class="cls-cat-div-img" src="{!cat.category_image}"/>
+                <p class="cls-cat-div"> {!cat.category_title}</p>
+               </div>
+              </div>   
+              </apex:repeat>    
+              </apex:repeat>
+            </div>    
+            </apex:outputPanel> 
+        </div>
+         <div  id="perfect_the_demo_tours">
+             <apex:outputPanel id="tour_resultPanel">
+              <apex:actionStatus startText="requesting..." stopText="" id="tour_myStatus" >
+                <apex:facet name="start">
+                <div class="waitingSearchDiv" id="el_loading" style="background-color: #fbfbfb;
+                       height: 100%;opacity:0.65;width:100%;"> 
+                    <div class="waitingHolder" style="top: 74.2px; width: 91px;">
+                        <img class="waitingImage" src="/img/loading.gif" title="Please Wait..." />
+                        <span class="waitingDescription">Please Wait...</span>
+                    </div>
+                </div>
+            </apex:facet>
+           </apex:actionStatus>
+          <div class="row">
+              <apex:repeat value="{!toursdto}" var="dto"> 
+              <apex:repeat value="{!dto.message.tours}" var="tour">
+            <div class="col-lg-3 col-md-4 col-sm-6 box" onclick="guidemeText(' >  {!tour.tour_title}')">
+                    <div class="img_box" onclick="getStepsByTourId('{!tour.tour_id}');">
+                            <div style="position:relative;display: flex;align-items: center;">
+                                 <img src="{!tour.tour_image}" class="img-responsive" style="width:100%;" /> 
+                                 <img src="{!URLFOR($Resource.Assets_SU,'Assets/video_play_btn.png')}" class="img-responsive" style="width:25%;display:block;margin:auto;position:absolute;left:38%;bottom:28%;"/>
+                            </div>                         
+                            <div style="text-align:center;background:#e8e8e8;line-height: 20px;padding: 5px;color: #8c8989;text-align: center;font-weight: bold;">
+                            {!tour.tour_title}
+                           </div>
+                    </div>
+                </div>     
+              </apex:repeat>    
+              </apex:repeat>
+            </div>
+            </apex:outputPanel>       
+        </div>
+         <div id="perfect_the_demo_steps">
+             <apex:outputPanel id="step_resultPanel">
+                  <apex:actionStatus startText="requesting..." stopText="" id="step_myStatus" >
+                <apex:facet name="start">
+                <div class="waitingSearchDiv" id="el_loading" style="background-color: #fbfbfb;
+                       height: 100%;opacity:0.65;width:100%;"> 
+                    <div class="waitingHolder" style="top: 74.2px; width: 91px;">
+                        <img class="waitingImage" src="/img/loading.gif" title="Please Wait..." />
+                        <span class="waitingDescription">Please Wait...</span>
+                    </div>
+                </div>
+            </apex:facet>
+           </apex:actionStatus>
+                  <script>
+                   $(document).ready(function() { 
+                   $("input[name='rating_video']").click(function(e){
+                   $('.point').html($(this).val());   
+                   });
+                   $("#shares").click(function(e){
+                   $("#share_popup_window").show();    
+                   }); 
+                   $("#close").click(function(e){
+                    $("#share_popup_window").hide();    
+                   });    
+                   });  
+                  </script>
+                <div id="share_popup_window">
+                  <div style="float: left;background: #f2f0f0;;width: 100%;height: 65px;position: relative;border-top-left-radius: 39px;border-top-right-radius: 41px;">
+                      <div style="margin-left: 39%;margin-top: 17px;color:#1797c0;font-weight:bold;">
+                      <img src="{!URLFOR($Resource.Assets_SU,'Assets/share_blueicon.png')}" width="30" height="30" />  <span>Share This Video</span>
+                      </div>
+                  </div>  
+                   <div style="float: left;margin-top: 10px;margin-left: 60px;width: 84%;">
+                       <span style="color: #1797c0;font-weight: bold;font-size: 24px;">Link</span>
+                       <span style="color: #1797c0;font-weight: bold;font-size: 24px;float:right;margin-right: 130px;">Social</span><br/>
+                       <input type="text" placeholder="http://xyz/123232212"/>
+                       <div style="float:right;">
+                       <img src="{!URLFOR($Resource.Assets_SU,'Assets/fb__icon.png')}" width="30" height="30" />
+                       <img src="{!URLFOR($Resource.Assets_SU,'Assets/twtr_icon.png')}" width="30" height="30" />
+                       <img src="{!URLFOR($Resource.Assets_SU,'Assets/g+_icon.png')}" width="30" height="30" />
+                       <img src="{!URLFOR($Resource.Assets_SU,'Assets/lkdn_icon.png')}" width="30" height="30" />
+                       <img src="{!URLFOR($Resource.Assets_SU,'Assets/pntrs_icon.png')}" width="30" height="30" />
+                       <span style="color: #1797c0;font-weight: bold;font-size: 14px;">More</span>
+                       </div>
+                  </div> 
+                    <div style="float: left;margin-top: 10px;margin-left: 60px;width: 100%;">
+                       <span style="color: #1797c0;font-weight: bold;font-size: 28px;">Share With Email</span><br/>
+                       <input type="text" placeholder="Enter Email"/>
+                  </div>   
+                  <div style="float:left;margin-left: 60px;margin-top: 10px;overflow: auto;position: relative;width: 85%;height: 330px;">
+                  <iframe style="top: 0;left: 0;width: 100%;height: 100%;" frameborder="0" src="https://gsscdnstorage.blob.core.windows.net/guideme-video/_572848de4eb1c_1462257886.mp4"/>
+                 </div>  
+                  <div style="background:#1797c0;color:white;float:left;margin-left: 42%;margin-top: 5px;width: 79px;font-weight: bold;font-size: 14px;border-radius: 50px;">
+                      <img style="margin: 5px;" src="{!URLFOR($Resource.Assets_SU,'Assets/share_whiteicon.png')}" width="20" height="20" /><span style="float:right;margin: 5px;">Share</span>
+                  </div>    
+                  <div id="close" style="float: right;position: absolute;right: 7px;"><img src="{!URLFOR($Resource.Assets_SU,'Assets/close_icon.png')}" width="20" height="20" /></div>
+                  </div>
+                <div class="row">
+                <div class="col-md-9"> 
+                <apex:repeat value="{!stepsdto}" var="dto">                  
+                <div style="margin:10px;background:white;width: 700px;height: 850px;">
+                <iframe id="step_video" width="700" height="400" frameborder="0" src="{!dto.message.promotion_info.video_azure}"/>
+                <div style="float:left;margin:5px">
+                <div class="point" style="float:left;margin: 2px;"></div>    
+                <div class="rating">
+                <input type="radio" id="star5" name="rating_video" value="5" /><label for="star5" title="Rocks!">5 stars</label>
+                <input type="radio" id="star4" name="rating_video" value="4" /><label for="star4" title="Pretty good">4 stars</label>
+                <input type="radio" id="star3" name="rating_video" value="3" /><label for="star3" title="Meh">3 stars</label>
+                <input type="radio" id="star2" name="rating_video" value="2" /><label for="star2" title="Kinda bad">2 stars</label>
+                <input type="radio" id="star1" name="rating_video" value="1" /><label for="star1" title="Sucks big time">1 star</label>
+                </div>
+                </div>
+                <div id="comments" style="float:left;color:#0f7be4;margin:5px;border: 1px solid #0f7be4 !important;font-weight:bold;padding: 4px;margin-left: 357px;">
+                <img src="{!URLFOR($Resource.Assets_SU,'Assets/comment_blueicon.png')}" width="20" height="20" /> comments   
+                </div>
+                <div id="shares" style="float:left;color:#0f7be4;margin:5px;border: 1px solid #0f7be4 !important;font-weight:bold;padding: 4px;">
+                <img src="{!URLFOR($Resource.Assets_SU,'Assets/share_blueicon.png')}" width="20" height="20" /> shares 
+                </div>
+                <div style="float:left;background:#e9ecee;width:100%;height:52%;">
+                <div style="float:left;color:#0f7be4;margin:5px;font-weight:bold;">
+                      10 Comments   
+                 </div> 
+                 <div style="float:right;color:#737373;margin:5px;font-weight:bold;">
+                        Show previous comments 
+                  </div>
+                  <div style="float:left;margin:5px;width:97%;height: 15%;border-bottom:1px solid #979797;">  
+                            <img  style="height: 40px;width: 40px;border-radius: 50%;" src="{!URLFOR($Resource.Assets_SU,'Images/dp1.jpg')}" />
+                            <span>Rihana Cooper</span>
+                   </div>
+                   <div style="float:left;margin:5px;width:97%;height: 15%;border-bottom:1px solid #979797;">  
+                            <img  style="height: 40px;width: 40px;border-radius: 50%;" src="{!URLFOR($Resource.Assets_SU,'Images/dp2.jpg')}" />
+                            <span>Rihana Cooper</span>
+                    </div>
+                    <div style="float:left;margin:5px;width:97%;height: 15%;border-bottom:1px solid #979797;">  
+                            <img  style="height: 40px;width: 40px;border-radius: 50%;" src="{!URLFOR($Resource.Assets_SU,'Images/dp3.jpg')}" />
+                            <span>Rihana Cooper</span>
+                     </div>
+                     <div style="float:left;margin:5px;width:97%;height: 15%;border-bottom:1px solid #979797;">  
+                            <img  style="height: 40px;width: 40px;border-radius: 50%;" src="{!URLFOR($Resource.Assets_SU,'Images/dp4.jpg')}" />
+                            <span>Rihana Cooper</span>
+                     </div>
+                     <div style="float:left;margin:5px;width:97%;height: 15%;display: flex;align-items: center;">
+                         <input type="text" style="width:90%;height: 57%;display: block;margin-left: 34px;" placeholder="Add Comments" name="post"/>
+                         <span style="margin-left: -40px;color:#0f7be4;font-weight:bold;">Post</span>
+                     </div>
+                 </div>    
+                </div> 
+                </apex:repeat>
+                </div> 
+                <div class="col-md-3" style="margin: 0px;padding: 30px;"> 
+                   <apex:repeat value="{!toursdto}" var="dto"> 
+                    <apex:repeat value="{!dto.message.tours}" var="tour">
+                           <div style="position:relative;display: flex;align-items: center;" onclick="getStepsByTourId('{!tour.tour_id}');" >
+                          <img src="{!tour.tour_image}" class="img-responsive" style="width:100%;" />
+                          <img src="{!URLFOR($Resource.Assets_SU,'Assets/video_play_btn.png')}" class="img-responsive" style="width:25%;display:block;margin:auto;position:absolute;left:38%;bottom:28%;"/>     
+                          </div>
+                          <div style="text-align:center;background:whitesmoke;line-height: 20px;color: #8c8989;text-align: center;">
+                            {!tour.tour_title}
+                        </div>
+                       </apex:repeat>
+                       </apex:repeat>
+                   </div>
+                </div>   
+              </apex:outputPanel> 
+            </div>
+        <apex:actionFunction name="getCategoriesByCategoryId" action="{!getCategoriesByCategoryId}" reRender="category_resultPanel" status="category_myStatus">
+            <apex:param name="category_id" id="category_id" value="" assignTo="{!category_id}"/>
+        </apex:actionFunction>  
+        <apex:actionFunction name="getTourByCategoryId" action="{!getTourByCategoryId}" reRender="tour_resultPanel" status="tour_myStatus">
+            <apex:param name="categoryIdTour" id="categoryIdTour" value="" assignTo="{!categoryIdTour}"/>
+        </apex:actionFunction> 
+        <apex:actionFunction name="getStepByTourId" action="{!getStepByTourId}" reRender="step_resultPanel" status="step_myStatus">
+            <apex:param name="tourId" id="tourId" value="" assignTo="{!tourId}"/>
+        </apex:actionFunction>    
+        </apex:form>
+        
+        <div class="footer" id="footer">
+            <div class="row">
+                <div class="col-lg-1 col-md-1 col-xs-1 col-sm-1" id="sales_uni_logo">
+                    <img src="{!URLFOR($Resource.Assets_SU,'Assets/SU.png')}" height="45"/>
+                </div>
+                <div class="col-lg-10 col-md-10 col-xs-10 col-sm-10" id="progress_bar">
+                    <span style="display:block;width:50%;text-align:right;font-size: 10px;font-weight: bold;">50%</span>
+                    <div class="progress-container round-xlarge">
+                        <div class="progressbar round-xlarge" style="width:50%"></div>
+                        <div class="profile-pic" style="margin-left:10px">
+                            <img src="{!URLFOR($Resource.Assets_SU,'Images/dp1.jpg')}" />
+                        </div>
+                        <div class="profile-pic" style="margin-left:2%">
+                            <img src="{!URLFOR($Resource.Assets_SU,'Images/dp2.jpg')}" />
+                        </div>
+                        <div class="profile-pic" style="margin-left:10%">
+                            <img src="{!URLFOR($Resource.Assets_SU,'Images/dp3.jpg')}" />
+                        </div>
+                        <div class="profile-pic" style="margin-left:21%">
+                            <img src="{!URLFOR($Resource.Assets_SU,'Images/dp4.jpg')}" />
+                        </div>
+                        <div class="profile-pic" style="margin-left:35%">
+                            <img src="{!URLFOR($Resource.Assets_SU,'Images/dp5.jpg')}" />
+                        </div>
+                        <div class="profile-pic" style="margin-left:40%">
+                            <img src="{!URLFOR($Resource.Assets_SU,'Images/dp6.jpg')}" />
+                        </div>
+                        <div class="profile-pic" style="margin-left:45%">
+                            <img src="{!URLFOR($Resource.Assets_SU,'Images/dp7.jpg')}" />
+                        </div>
+                    </div>
+                </div>
+            <div class="col-lg-1 col-md-1 col-xs-1 col-sm-1" style="margin-left: 15px;">
+                <img src="{!URLFOR($Resource.Assets_SU,'Assets/edcast.png')}" style="float:right; width:75px;margin-top: 8px;" />
+            </div>
+        </div>
+    </div>
+    </div>
+</body>
+</html>
+</apex:page>

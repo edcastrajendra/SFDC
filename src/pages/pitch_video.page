@@ -1,0 +1,285 @@
+<apex:page standardStylesheets="false" sidebar="false" controller="VideoPitchController" action="{!getLocatorURL}"> 
+<html xmlns="https://www.w3.org/2000/svg" xmlns:xlink="https://www.w3.org/1999/xlink">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+	<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.1/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="{!URLFOR($Resource.Assets_SU,'bootstrap/css/bootstrap.css')}"/>
+    <link rel="stylesheet" href="{!URLFOR($Resource.Assets_SU,'Styles/Main.css')}"/>
+    <link rel="stylesheet" href="{!URLFOR($Resource.Assets_SU,'Styles/style.css')}"/>
+    <title>Perfect The Pitch</title>
+    <script>
+        var maxBlockSize = 256 * 1024;//Each file will be split in 256 KB.
+        var numberOfBlocks = 1;
+        var selectedFile = null;
+        var currentFilePointer = 0;
+        var totalBytesRemaining = 0;
+        var blockIds = new Array();
+        var blockIdPrefix = "block-";
+        var submitUri = null;
+        var bytesUploaded = 0;
+        var percentComplete = 0;
+        $(document).ready(function () {
+            $("#file").bind('change', handleFileSelect);
+            if (window.File && window.FileReader && window.FileList && window.Blob) {
+                // Great success! All the File APIs are supported.
+            } else {
+                alert('The File APIs are not fully supported in this browser.');
+            }
+        });
+        function handleFileSelect(e) {
+            $('.cls-video-select-div').hide();
+            $('.cls-video-submit-div').show();
+            percentComplete=0;
+            maxBlockSize = 256 * 1024;
+            currentFilePointer = 0;
+            totalBytesRemaining = 0;
+            var files = e.target.files;
+            selectedFile = files[0];
+            console.log(selectedFile.name);
+            console.log(selectedFile.size);
+            console.log(selectedFile.type);
+            var fileSize = selectedFile.size;
+            if (fileSize < maxBlockSize) {
+                maxBlockSize = fileSize;
+            }
+            totalBytesRemaining = fileSize;
+            if (fileSize % maxBlockSize == 0) {
+                numberOfBlocks = fileSize / maxBlockSize;
+            } else {
+                numberOfBlocks = parseInt(fileSize / maxBlockSize, 10) + 1;
+            }
+            var baseUrl = $("#sasUrl").val();
+            var indexOfQueryStart = baseUrl.indexOf("?");
+            submitUri = baseUrl.substring(0, indexOfQueryStart)  + baseUrl.substring(indexOfQueryStart);
+            uploadFileInBlocks();      
+        }
+        var reader = new FileReader();
+        reader.onloadend = function (evt) {
+            if (evt.target.readyState == FileReader.DONE) {
+                var uri = submitUri + '&comp=block&blockid=' + blockIds[blockIds.length - 1];
+                var requestData = new Uint8Array(evt.target.result);
+                $.ajax({
+                    url: uri,
+                    type: "PUT",
+                    data: requestData,
+                    processData: false,
+                    beforeSend: function(xhr) {
+                        xhr.setRequestHeader('x-ms-blob-type', 'BlockBlob');
+                    },
+                    success: function (data, status) {
+                        bytesUploaded += requestData.length;
+                        percentComplete = ((parseInt(bytesUploaded) / parseInt(selectedFile.size)) * 100).toFixed(0);
+                         console.log('percent='+percentComplete);
+                        if(percentComplete <= 100){
+                         $(".cls-percentage").width(percentComplete+"%");   
+                         $(".percentage").text(percentComplete);   
+                            }
+                        uploadFileInBlocks();
+                    },
+                    error: function(xhr, desc, err) {
+                    }
+                });
+            }
+        };
+        function uploadFileInBlocks() {
+            if (totalBytesRemaining > 0) {
+                console.log("current file pointer = " + currentFilePointer + " bytes read = " + maxBlockSize);
+                var fileContent = selectedFile.slice(currentFilePointer, currentFilePointer + maxBlockSize);
+                var blockId = blockIdPrefix + pad(blockIds.length, 6); 
+                console.log("block id = " + blockId);
+                blockIds.push(btoa(blockId));
+                reader.readAsArrayBuffer(fileContent);
+                currentFilePointer += maxBlockSize;
+                totalBytesRemaining -= maxBlockSize;
+                if (totalBytesRemaining < maxBlockSize) {
+                    maxBlockSize = totalBytesRemaining;
+                }
+            } else {
+                commitBlockList();
+            }
+        }
+        function commitBlockList() {
+            var uri = submitUri + '&comp=blocklist';
+            console.log(uri);
+            var requestBody = '<?xml version="1.0" encoding="utf-8"?><BlockList>';
+            for (var i = 0; i < blockIds.length; i++) {
+                requestBody += '<Latest>' + blockIds[i] + '</Latest>';
+            }
+            requestBody += '</BlockList>';
+            $.ajax({
+                url: uri,
+                type: "PUT",
+                data: requestBody,
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader('x-ms-blob-content-type', selectedFile.type);
+                },
+                success: function (data, status) {
+                },
+                error: function (xhr, desc, err) {
+                    console.log(desc);
+                    console.log(err);
+                }
+            });
+ 
+        }
+        function pad(number, length) {
+            var str = '' + number;
+            while (str.length < length) {
+                str = '0' + str;
+            }
+            return str;
+        }
+    </script>
+    <style>
+    .command-Button{
+        background-color: #00a1e1 !important;
+        color: #fff !important;
+        font-size: 16px !important;
+        padding: 5px 20px !important;
+        margin: 3px !important;
+        border: none !important;
+        border-bottom-color: #7f7f7f !important;
+        background-image: url('') !important;
+        font-weight: 100 !important;
+        }
+        .input-Text{
+        padding: 5px 10px;
+        }
+        .input-Textarea{
+        resize: none;height: 120px;width: 100%;padding: 5px 10px;
+        }
+    </style>
+</head>
+<body>
+ <apex:form > 
+         
+    <input type="hidden" id="sasUrl" value="{!locator_url}"/>  
+    <div  style="background-color:#f5f5f5; margin-top: -10px;margin-left: -10px;margin-right: -10px;">
+        <div class="header" id="header">
+        <div class="header-first">
+                <div class="col-lg-8 col-md-8 col-sm-8 col-xs-8 col-lg-offset-2 col-md-offset-2 col-sm-offset-2 col-xs-offset-2">
+                    <div style="width:200px; margin:7px auto;">
+                        <input type="text" id="search-text-box"  name="search" placeholder="Search here"/>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
+                    <div class="notification">
+                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/01.png')}" />
+                    </div>
+                </div>
+            </div>
+        <div class="header-second">
+                <div class="col-lg-9 col-md-9 col-sm-9 col-xs-9">
+                 <div class="site-map" >
+                  <div style="margin-top: 10px;color: #00a0e0;float:left;border-bottom: 1px solid #00a0e0;height: 29px;">Perfect The Pitch</div>
+                  <div style="margin-top: 10px;color: #838486;float:left;margin-left: 10px;">Perfect The Demo</div>      
+                 </div>
+                </div>
+                <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3">
+                    <div class="grid-type" style="display:none;">
+                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/02.png')}" />
+                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/03.png')}" />
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-12 col-xs-12 cls-video-select-div" style="text-align:center;height:500px;">
+            <div class="" style="margin:0 auto;max-width:255px;padding: 40px 0;">
+            <div style="padding:5px;background-color:#e7425f;color:#fff;margin-bottom:35px;border-radius:4px;font-size: 16px;">
+                <span>Record The Pitch</span>
+            </div>
+            <div>
+                <img src="{!URLFOR($Resource.vrp,'Assets/upload_icon.png')}" />
+            </div>
+             <div style="padding:5px 20px;background-color:#00a1e1;color:#fff;border-radius:4px;font-size: 16px;margin-top:10px;position: relative;overflow: hidden;">
+                <span>Choose file to upload</span>
+             <input type="file" id="file" name="file" style=" position: absolute;top: 0;right: 0;margin: 0;padding: 0;font-size: 20px;cursor: pointer;opacity: 0;filter: alpha(opacity=0);" />
+            </div>
+            <p style="padding:5px 20px;color:#888888;font-size: 16px;">
+                or drag and drop them here.
+            </p>
+        </div>
+        </div>
+                     
+        <div class="col-sm-12 col-xs-12 cls-video-submit-div" style="text-align:center;padding: 40px;display:none;">
+             <div class="col-sm-5 col-xs-5">
+                 <div style="height: 200px;background-color: #000;">
+                 </div>
+                 <div style="position:absolute;top:0;right:15px;">
+                     <div style="display: inline-block;float: left; padding-right: 2px;">
+                        <img style="height: 25px;width: 25px;background-color: #525252;float: left;padding: 6px;" src="{!URLFOR($Resource.vrp,'Assets/play_btn.png')}" />
+                     </div>
+                      <img style="height: 25px;width: 25px;background-color: #525252;float: left;padding: 6px;" src="{!URLFOR($Resource.vrp,'Assets/close_leaderboard_icon.png')}" />
+                 </div>
+                 <div class="col-sm-12 col-xs-12" style="background-color:#525252;height:30px;" >
+                     <div class="cls-percentage" style="background-color:#00a1e1;position:absolute;top:0;left:0;height:30px;">
+                     </div>
+                     <div style="width:100%;position:relative;text-align: center;top: 5px;color: #fff;">
+  						<span class="percentage"></span>
+                         <span>% Upload</span>
+                     </div>
+                  </div>
+             </div>
+             <div class="col-sm-6 col-xs-7">
+                 <div class="col-sm-12 col-xs-12">
+                     <p class="col-sm-12 col-xs-12" style="text-align:left;padding: 0 0 5px;">
+                         Title Name
+                     </p>
+                     <apex:inputText required="true" id="video-title" size="90" styleClass="input-Text" value="{!video_title}" />
+                 </div>
+                  <div class="col-sm-12 col-xs-12" style="padding:15px;">
+                     <p class="col-sm-12 col-xs-12" style="text-align:left;padding: 0 0 5px;">
+                         Discription
+                     </p>
+                       <apex:InputTextarea required="true" id="video-desc"  cols="32" styleClass="input-Textarea"  value="{!video_desc}"/>
+                      <div style="padding: 15px 0;text-align: right;">
+                          <apex:commandButton action="{!addVideoInfo}" value="Save" styleClass="command-Button"></apex:commandButton>
+                          <apex:commandButton action="{!cancel}" value="Cancel" styleClass="command-Button" ></apex:commandButton>
+                      </div>
+                 </div>
+             </div>
+         </div>
+        <div class="footer" id="footer">
+            <div class="row">
+                <div class="col-lg-1 col-md-1 col-xs-1 col-sm-1" id="sales_uni_logo">
+                    <img src="{!URLFOR($Resource.Assets_SU,'Assets/SU.png')}" height="45"/>
+                </div>
+                <div class="col-lg-10 col-md-10 col-xs-10 col-sm-10" id="progress_bar">
+                    <span style="display:block;width:50%;text-align:right;font-size: 10px;font-weight: bold;">50%</span>
+                    <div class="progress-container round-xlarge">
+                        <div class="progressbar round-xlarge" style="width:50%"></div>
+                        <div class="profile-pic" style="margin-left:10px">
+                            <img src="{!URLFOR($Resource.Assets_SU,'Images/dp1.jpg')}" />
+                        </div>
+                        <div class="profile-pic" style="margin-left:2%">
+                            <img src="{!URLFOR($Resource.Assets_SU,'Images/dp2.jpg')}" />
+                        </div>
+                        <div class="profile-pic" style="margin-left:10%">
+                            <img src="{!URLFOR($Resource.Assets_SU,'Images/dp3.jpg')}" />
+                        </div>
+                        <div class="profile-pic" style="margin-left:21%">
+                            <img src="{!URLFOR($Resource.Assets_SU,'Images/dp4.jpg')}" />
+                        </div>
+                        <div class="profile-pic" style="margin-left:35%">
+                            <img src="{!URLFOR($Resource.Assets_SU,'Images/dp5.jpg')}" />
+                        </div>
+                        <div class="profile-pic" style="margin-left:40%">
+                            <img src="{!URLFOR($Resource.Assets_SU,'Images/dp6.jpg')}" />
+                        </div>
+                        <div class="profile-pic" style="margin-left:45%">
+                            <img src="{!URLFOR($Resource.Assets_SU,'Images/dp7.jpg')}" />
+                        </div>
+                    </div>
+                </div>
+            <div class="col-lg-1 col-md-1 col-xs-1 col-sm-1" style="margin-left: 15px;">
+                <img src="{!URLFOR($Resource.Assets_SU,'Assets/edcast.png')}" style="float:right; width:75px;margin-top: 8px;" />
+            </div>
+        </div>
+    </div>
+    </div>
+   
+     </apex:form>
+</body>
+</html>
+</apex:page>

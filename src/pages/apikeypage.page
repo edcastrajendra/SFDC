@@ -1,0 +1,143 @@
+<apex:page title="SalesU Admin" standardStylesheets="false" sidebar="false" controller="SalesUApiKeyController" action="{!getApiKey}">
+    <style>
+        table.tbl td {
+            padding: 0px 10px;
+            color: #16325c;
+            line-height: 2.125rem;
+            min-height: calc(2.125rem + 7px);
+            font-family: Lato;
+            font-size: 14px;
+            font-weight: 400;
+            border-top: 1px solid #d8dde6;
+            display: inline-table;
+        }
+        table.tbl td input {
+            background-color: white;
+            border: 1px solid #d8dde6;
+            border-radius: 0.25rem;
+            color: #16325c;
+            display: inline-block;
+            line-height: 2.125rem;
+            padding: 0 1rem 0 0.75rem;
+            transition: border 0.1s linear 0s, background-color 0.1s linear 0s;
+            width: 50%;
+            font-family: Lato;
+        }
+        .bg input.btn {
+            background: #365228 none repeat scroll 0 0;
+            background-color: #509b4e;
+            box-shadow: 0px 3px 1px #2a5c29;
+            font-family: 'Lato';
+            font-style: normal;
+            font-weight: 400;
+            font-size: 14px;
+            border: 1px solid #6ebe49;
+            color: white;
+            margin: 5px;
+            padding: 0px 15px;
+            width: initial;
+        }
+        table.tbl .leftTd {
+            font-weight: 600;
+            text-align:right;
+            width:20%;
+            margin-right: -2px;
+        }
+        table.tbl .righttTd {        
+            width:70%;
+        }
+        .heading {
+            border-bottom: 2px solid #e4e4e4;
+            padding: 15px 20px;
+            font-family: Lato;
+            font-size: 16px;
+            font-weight: 600;
+            background: #f4f6f9 none repeat scroll 0 0;
+            text-align: left;
+            margin-bottom: -3px;
+        }
+        .noSidebarCell {
+            padding: 0px;
+            min-height: 400px;
+            vertical-align: top;
+            height: 400px;
+            background-color: #F7F7F7 !important;
+            border-bottom: 1px solid #e4e4e4;
+        }
+        .message .messageTable .messageCell, .tbl {
+            vertical-align: middle;
+            font-family: Lato;
+            font-size: 14px;
+            font-weight: 400;
+        }
+        .bg{
+            background-color: #fff;
+            margin: 10px 20px;
+            padding: 15px;
+            width: 60%;
+        }
+        .tbl{width: 100%;}
+        .bodyDiv .outerNoSidebar{
+            padding: 0px !important;
+        }
+        
+        table.messageTable tr th, table.messageTable tr td {
+            padding: 0;
+        }
+        .mailtoEdcastMsg {
+            font-size: inherit !important;
+            margin: 0 !important;
+            text-decoration: none;
+        }
+        .mailtoEdcastMsg:hover {                
+            text-decoration: underline !important;
+        }
+    </style>
+    <apex:form id="frm">
+        <div>
+            <center>   
+                <div class="bg" style="min-width: 800px;">  
+                    <div class="heading ">SalesU Authorization</div>
+                    <center>            
+                    <table class="tbl"> 
+                        <tr style="text-align:center;">
+                            <td class="" colspan="2">Click Edit button below to Configure or Update your SalesU Credentials.</td>
+                        </tr>                    
+                            <tr>
+                                <td class="leftTd">SU-ApiKey</td>
+                                <td class="righttTd ">
+                                    
+                                    <div style="display: inline;">
+                                      {!apiKeySU}
+                                    </div>
+                                </td>
+                                
+                            </tr>
+                            <tr>
+                                <td class="leftTd">PTD-ApiKey</td>
+                                <td class="righttTd ">
+                                   {!apiKeyPTD}
+                                </td>
+                            </tr>
+                          <tr>
+                                <td class="leftTd">PTD-UserKey</td>
+                                <td class="righttTd ">
+                                   {!userKeyPTD}
+                                </td>
+                            </tr>
+                        <tr>
+                            <td colspan="2" style="text-align: center;width: 97.5%; padding-top: 10px;">
+                                   <apex:commandButton action="{!editKey}" value="Edit"   id="login"/>    
+                            </td>
+                        </tr>
+                    </table>
+                    </center>
+                </div>               
+                <div class="bg" style="text-align: center;">
+                  
+                </div>
+            </center>   
+        </div>
+
+    </apex:form>
+</apex:page>

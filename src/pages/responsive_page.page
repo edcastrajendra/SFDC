@@ -1,0 +1,1664 @@
+<apex:page controller="SalesUniversity_Edcast" standardStylesheets="false" sidebar="false"> 
+<html xmlns="https://www.w3.org/2000/svg" xmlns:xlink="https://www.w3.org/1999/xlink">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.6/angular.min.js"></script>
+    <script src="{!URLFOR($Resource.Assets_SU,'js/main.js')}"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+    <script src="https://f.vimeocdn.com/js/froogaloop2.min.js"></script>
+    <link rel="stylesheet" href="{!URLFOR($Resource.Assets_SU,'bootstrap/css/bootstrap.css')}"/>
+    <link rel="stylesheet" href="{!URLFOR($Resource.Assets_SU,'Styles/Main.css')}"/>
+    <link  rel="stylesheet" href="{!URLFOR($Resource.Assets_SU,'Styles/Video.css')}"/>
+    <title>Index</title>
+    
+<script type="text/javascript">
+var arrDiv = new Array();   
+function appendText(text){ 
+arrDiv.push(text);    
+$('#title').append(text);
+}
+function listView(){
+$("#list_view").attr('src',"{!URLFOR($Resource.Assets_SU,'Assets/02_selected.png')}"); 
+$("#grid_view").attr('src',"{!URLFOR($Resource.Assets_SU,'Assets/03.png')}");    
+if(arrDiv.length == 0){    
+$('#body-contain_main').hide();
+$('#body-contain_main-list').show(); 
+}else if(arrDiv.length == 1){  
+$('#body-contain').hide();
+$('#list_view_contain').show();     
+}else if(arrDiv.length == 2){  
+$('#grid_view_channel').hide();
+$('#list_view_channel').show();     
+}else if(arrDiv.length == 3){  
+$('#grid_view_milestone').hide();
+$('#list_view_milestone').show();     
+}else if(arrDiv.length == 4){  
+$('#grid_view_submilestone').hide();
+$('#list_view_submilestone').show();     
+} 
+} 
+function gridView(){
+$("#list_view").attr('src',"{!URLFOR($Resource.Assets_SU,'Assets/02.png')}"); 
+$("#grid_view").attr('src',"{!URLFOR($Resource.Assets_SU,'Assets/01_selected.png')}");    
+if(arrDiv.length == 0){    
+$('#body-contain_main').show();
+$('#body-contain_main-list').hide();
+}else if(arrDiv.length == 1){  
+$('#body-contain').show();
+$('#list_view_contain').hide();    
+}else if(arrDiv.length == 2){  
+$('#grid_view_channel').show();
+$('#list_view_channel').hide();     
+}else if(arrDiv.length == 3){  
+$('#grid_view_milestone').show();
+$('#list_view_milestone').hide();     
+}else if(arrDiv.length == 4){  
+$('#grid_view_submilestone').show();
+$('#list_view_submilestone').hide();     
+}    
+}     
+$(document).ready(function(){
+  $("#text-search").keyup(function(){
+    if(this.value.length > 0){
+          $("#search").show();
+          $("#submilestonesearch").show(); 
+        }else{
+             $("#search").hide();
+             $("#submilestonesearch").hide();
+            }
+  });
+}); 
+    
+var myApp = angular.module('myApp', []).controller('searchCtrl', function($scope,$http) {
+    $.ajax({ url : 'https://storage.googleapis.com/cdn.wagmob.com/library/xml/org_2.json', 
+         type: 'GET', 
+         headers: { "Content-Type":"application/json;" }, 
+         success: function(data) { 
+            var channel_info;
+            var searchorgarray = [];
+            angular.isArray(data.orginfo.libraryinfo.channelinfo) ? (channel_info = data.orginfo.libraryinfo.channelinfo) : (channel_info = [], _form_o.push(data.orginfo.libraryinfo.channelinfo));
+            angular.forEach(channel_info, function(getchannel, index) {
+            var channel_arrayobj = {};
+            console.log(getchannel.channelimage); 
+            channel_arrayobj.channelid= getchannel.channelid;    
+            channel_arrayobj.title = getchannel.channeltitle;  
+            channel_arrayobj.image = getchannel.channelimage;
+            searchorgarray.push(channel_arrayobj);
+            var _subject;    
+            angular.isArray(getchannel.subjectinfo) ? (_subject = getchannel.subjectinfo) : (_subject = [], _subject.push(getchannel.subjectinfo));
+            angular.forEach(_subject, function(getsubject, sindex) {
+             var subject_arrayobj = {};  
+              console.log(getsubject.subjectname);
+              console.log(getsubject.imageview);
+              subject_arrayobj.uniquefolderid= getsubject.uniquefolderid; 
+              subject_arrayobj.subkey = getsubject.subkey;  
+              subject_arrayobj.title =getsubject.subjectname;
+              subject_arrayobj.image =getsubject.imageview; 
+              searchorgarray.push(subject_arrayobj); 
+            });    
+            });
+             $scope.search = searchorgarray;
+         }, 
+         error:function(jqXHR, textStatus, errorThrown) { 
+             alert('textStatus->'+textStatus); 
+         }});
+  $scope.get_data = function(channel_id,uniquefolderid,subkey,title) {
+     $('#search').hide();   
+     $('#body-contain_main').hide();
+     $('.grid-type').hide();
+     $('#body-contain').hide();
+     $('.site-map').show();
+     console.log(channel_id);
+     console.log(uniquefolderid); 
+     console.log(subkey); 
+    if(channel_id != null){
+    $('#title').show();   
+    $('#milestone').hide();
+     getSubject(channel_id);   
+     }else{    
+    var submilestonearray = [];    
+     getMileStone(uniquefolderid,subkey);
+     console.log("https://storage.googleapis.com/cdn.wagmob.com/subject/"+uniquefolderid+"/xml/android/windows_category.xml"); 
+     var xhttp = new XMLHttpRequest();
+     xhttp.onreadystatechange = function() {
+     if(xhttp.readyState == 4 && xhttp.status == 200) {
+      var indexitem; 
+      var indexsubitem;   
+      var xmlDoc = xhttp.responseXML;
+      console.log(xmlDoc);   
+      var rss= xmlDoc.getElementsByTagName("rss");
+      console.log(rss);   
+      console.log(rss.length);   
+      var item = rss[0].getElementsByTagName("item");
+      console.log(item); 
+      console.log(item.length);  
+      for (indexitem = 0; indexitem <item.length; indexitem++) {
+      var milestone_arrayobj = {};  
+      var containerid = item[indexitem].getElementsByTagName("containerid")[0].childNodes[0].nodeValue;   
+      var title = item[indexitem].getElementsByTagName("title")[0].childNodes[0].nodeValue;
+      var view = item[indexitem].getElementsByTagName("view")[0].childNodes[0].nodeValue;
+      console.log('containerid='+containerid+' title='+title+' view='+view); 
+      milestone_arrayobj.containerid = containerid; 
+      milestone_arrayobj.title = title;
+      milestone_arrayobj.image = view; 
+      milestone_arrayobj.uniquefolderid = uniquefolderid;    
+    submilestonearray.push(milestone_arrayobj);   
+     var subitem = item[indexitem].getElementsByTagName("subitem");
+       console.log(subitem);   
+       console.log(subitem.length);  
+       for (indexsubitem = 0; indexsubitem <subitem.length; indexsubitem++) {
+           var submilestone_arrayobj = {};
+           var subcontainerid = subitem[indexsubitem].getElementsByTagName("containerid")[0].childNodes[0].nodeValue;
+           var subtitle = subitem[indexsubitem].getElementsByTagName("subtitle")[0].childNodes[0].nodeValue;
+           var subimageview = subitem[indexsubitem].getElementsByTagName("subimageview")[0].childNodes[0].nodeValue;
+           submilestone_arrayobj.subcontainerid = subcontainerid;
+           submilestone_arrayobj.title = subtitle;
+           submilestone_arrayobj.image = subimageview;
+           submilestone_arrayobj.uniquefolderid = uniquefolderid;
+           submilestonearray.push(submilestone_arrayobj);
+           console.log('subcontainerid='+subcontainerid+' subtitle='+subtitle+' subimageview='+subimageview);  
+               }
+             }
+           }
+         console.log(submilestonearray);  
+         $scope.submilestonesearch = submilestonearray;
+        };
+     xhttp.open("GET", "https://storage.googleapis.com/cdn.wagmob.com/subject/"+uniquefolderid+"/xml/android/windows_category.xml", true);
+     xhttp.send();    
+     }
+    }
+    $scope.get_data_task = function(containerid,subcontainerid,title) {
+    $('.site-map').show();   
+    $('#search').hide();   
+    $('#milestone').hide();
+    $('#submilestonesearch').hide(); 
+    if(containerid != null){
+        getSubMilestone(containerid);
+        }else if(subcontainerid != null){
+          getTask(subcontainerid);  
+            }
+        }
+}); /// 
+    
+var eventMethod = window.addEventListener ? "addEventListener" : "attachEvent";
+var eventer = window[eventMethod];
+var messageEvent = eventMethod == "attachEvent" ? "onmessage" : "message";
+eventer(messageEvent,function(e) {
+     var key = e.message ? "message" : "data";
+     var data = e[key].toLowerCase();
+        if (data == "a" || data == "b" || data == "c" || data == "d" || data == "e" || data == "f") { 
+              incrementCounter(data);
+                  timer();
+            }
+        },false);
+        function myFunction() {
+            document.getElementById("myDropdown").classList.toggle("show");
+        }
+        window.onclick = function (event) {
+            if (!event.target.matches('.dropbtn')) {
+               var dropdowns = document.getElementsByClassName("dropdown-content");
+               var i;
+            for (i = 0; i < dropdowns.length; i++) {
+               var openDropdown = dropdowns[i];
+              if (openDropdown.classList.contains('show')) {
+               openDropdown.classList.remove('show');
+         }
+      }
+   }
+}
+$(document).ready(function() {
+        $("#sales_u").click(function(e){
+        $('#body-contain_main').hide();  
+        $('.site-map').show();
+        $('#body-contain').show();
+    });   
+$("#sales_u_list").click(function(e){
+        $('#body-contain_main-list').hide();
+        $('.grid-type').hide();
+        $('#body-contain').show();
+        $('.site-map').show();
+        
+    });   
+$(".circle").click(function(e){
+        $('.circle').css('border-color','green');
+        $('.circle').css('background','#57bc36');
+    }); 
+       
+});
+function getSubject(channelId){
+   $("#channel").show();
+   $("#body-contain").hide();
+   $('#list_view_contain').hide();    
+   getSubjectByChannel(channelId);    
+        }
+function getMileStone(uniquefolderid,subkey){
+    $("#channel").hide();
+    $("#milestone").show();
+   getMileStoneByFolderId(uniquefolderid,subkey);
+}
+function getSubMilestone(containerid){
+     $('#milestone').hide();
+     $("#sub-milestone").show();
+     getSubMilestoneByParentId(containerid);
+}
+function getTask(containerid){
+     $("#sub-milestone").hide();
+     $('#body-contain_task').show();
+     getTaskByContainerId(containerid);
+}
+function getVideo(taskid,containerid,ismandatory){
+$('#body-contain_task').hide();
+    $('.video-box').show();
+    getVideoByTaskId(taskid,containerid,ismandatory);
+}
+function getTutorial(taskid,containerid,ismandatory){
+$('#body-contain_task').hide();
+$('#tutorial-box').show();    
+ getTutorialByTaskId(taskid,containerid,ismandatory);
+}
+function getWorkbook(taskid,containerid,ismandatory){
+$('#body-contain_task').hide();
+$('#workbook-box').show();
+getWorkbookByTaskId(taskid,containerid,ismandatory);    
+} 
+function getQuiz(floderId,quizFilName,ismandatory,taskid){
+$('#body-contain_task').hide();
+$('#quiz-box').show();
+getQuizFileByFloderId(floderId,quizFilName,ismandatory,taskid);
+timer();   
+}
+    
+
+var timeout;
+var x;    
+function timer() {
+    var i = 60;
+        clearTimeout(timeout);
+        timeout = setInterval(function () {
+          x = document.getElementById("time").innerHTML = i;
+            if(x == 0){
+             timer();
+             var data='';   
+             incrementCounter(data);   
+                 }
+            i--;
+        }, 1000);
+} 
+</script>
+<style>
+#list_view_channel {
+    display: none;
+    height: 100%;
+}  
+#list_view_milestone {
+    display: none;
+    height: 100%;
+}
+#list_view_submilestone {
+    display: none;
+    height: 100%;
+} 
+#search{
+    display:none;
+    position: absolute;
+    top: 33px;
+    background-color: white;
+    width: 35%;
+    max-height: 325px;
+    overflow: auto;
+    padding: 0;
+    left: 50%;
+    max-width: 440px;
+    transform: translate(-50%);
+    z-index: 1;
+    }   
+#submilestonesearch{
+    display:none;
+    position: absolute;
+    top: 33px;
+    background-color: white;
+    width: 35%;
+    max-height: 325px;
+    overflow: auto;
+    padding: 0;
+    left: 50%;
+    max-width: 440px;
+    transform: translate(-50%);
+    z-index: 1;
+}    
+@media screen and (min-width: 900px){
+#milestone{
+display:none;
+height: 1000px;
+}
+#tutorial-box{
+display:none;
+height: 1000px;
+}
+#workbook-box{
+display:none;
+height: 1000px;
+}
+#quiz-box{
+display:none;
+height: 600px;
+}       
+#sub-milestone{
+display:none;
+height: 1000px;
+}    
+#channel{
+display:none;
+height: 600px;
+}    
+}
+    
+#hide-ans{
+width:50px;
+height:200px;
+position:absolute;
+left: 620px;
+top: 120px;
+    -webkit-animation: cssAnimation 0s ease-in 2s forwards;
+    -moz-animation: cssAnimation 0s ease-in 2s forwards;
+    -o-animation: cssAnimation 0s ease-in 2s forwards;
+    animation: cssAnimation 0s ease-in 2s forwards;
+    -webkit-animation-fill-mode: forwards;
+    animation-fill-mode: forwards;  
+}     
+@keyframes cssAnimation {
+    from {
+        visibility:hidden;
+    }
+    to {
+        width:0;
+        height:0;
+        visibility:hidden;
+    }
+}
+@-webkit-keyframes cssAnimation {
+    from {
+        visibility:hidden;
+    }
+    to {
+        width:0;
+        height:0;
+        visibility:hidden;
+    }
+}
+#title {
+margin-top: 10px;
+color: #6495ed;
+font-weight: bold;
+text-overflow: ellipsis;
+overflow: hidden;
+white-space: nowrap;    
+}
+.grow:hover
+{
+-webkit-transform: scale(1.1);
+-ms-transform: scale(1.1);
+transform: scale(1.1);
+}    
+</style>   
+</head>
+    
+<body>  
+    <div style="margin-top: -10px;margin-left: -10px;margin-right: -10px;">
+     <div class="header" id="header">
+      <div class="header-first">
+       <div class="col-lg-8 col-md-8 col-sm-8 col-xs-8 col-lg-offset-2 col-md-offset-2 col-sm-offset-2 col-xs-offset-2">
+         <div style="width:200px; margin:7px auto;">
+           <div ng-app="myApp" ng-controller="searchCtrl">
+             <input type="text" style="left:auto; right:0px;" name="search" id="text-search" placeholder="Search here" ng-model="keyWord.title"/>
+               <div  id="search">   
+                 <div ng-repeat="value in search | filter:keyWord" ng-click="get_data(value.channelid,value.uniquefolderid,value.subkey,value.title)" style="padding: 15px;border-bottom: 1px solid #cacaca;cursor: pointer;">
+                     <img height="45px" width="45px" style="border-radius:50%;margin-top:-7px;vertical-align:middle;border: 1px solid #3369e8;" src="https://storage.googleapis.com/cdn.wagmob.com/library/images/{{value.image}}"/>
+                       <h5 style="display: inline-block;vertical-align: middle;width: 75%;padding-left: 10px;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">{{value.title}}</h5>
+                    </div>
+              </div> 
+               <div  id="submilestonesearch">   
+                 <div ng-repeat="value in submilestonesearch | filter:keyWord" ng-click="get_data_task(value.containerid,value.subcontainerid,value.title)" style="padding: 15px;border-bottom: 1px solid #cacaca;cursor: pointer;">
+                     <img height="45px" width="45px" style="border-radius:50%;margin-top:-7px;vertical-align:middle;border: 1px solid #3369e8;" src="https://storage.googleapis.com/cdn.wagmob.com/subject/{{value.uniquefolderid}}/tile/180/{{value.image}}"/>
+                       <h5 style="display: inline-block;vertical-align: middle;width: 75%;padding-left: 10px;overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">{{value.title}}</h5>
+                    </div>
+              </div>
+          </div>    
+         </div>
+      </div>
+            <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
+               <div class="notification">
+                  <img src="{!URLFOR($Resource.Assets_SU,'Assets/01.png')}" />
+               </div>
+            </div>
+            </div>
+        <div class="header-second">
+                <div class="col-lg-9 col-md-9 col-sm-9 col-xs-9">
+                    <div class="site-map" style="display:none;">
+                      <div onclick="backByDiv()">
+                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/back.png')}" width="30" height="30" style="margin-top:-5px;transition: all .3s;cursor: pointer;float:left;"/>    
+                        </div>
+                      <div id="title"></div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3">
+                    <div class="grid-type">
+                        <img id="list_view" onclick="listView();" src="{!URLFOR($Resource.Assets_SU,'Assets/02.png')}" />
+                        <img  id="grid_view" onclick="gridView();" src="{!URLFOR($Resource.Assets_SU,'Assets/01_selected.png')}" />
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="container" id="body-contain_main">
+            <div class="row">
+                <div class="col-lg-3 col-md-4 col-sm-6 box">
+                    <div class="img-box">                       
+                            <div style="position:relative;" id="sales_u" onclick="appendText('Sales University')">
+                                <img src="{!URLFOR($Resource.Assets_SU,'Assets/onboardingpage_img8.png')}" class="img-responsive grow" style="width:100%;cursor: pointer;" />
+                                <div class="small_circle"><div class="perc">100%</div></div>
+                                <div style="right:0; position:absolute;background-color: #2a68d8;color: white;padding: 2px;bottom: 30px;font-size: 12px;">Week 1</div>
+                                <div style="height:30px; line-height: 20px; padding: 5px; color: #888888;">
+                                    Sales University
+                                </div>
+                            </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-4 col-sm-6 box">
+                    <div class="img-box">
+                            <div style="position:relative;">
+                                <img src="{!URLFOR($Resource.Assets_SU,'Assets/onboardingpage_img1.png')}" class="img-responsive grow" style="width:100%;cursor: pointer;" />
+                                <div style="right:0; position:absolute;top: 0;width: 30px;"><img src="{!URLFOR($Resource.Assets_SU,'Assets/chekmark_icon.png')}" class="img-responsive" style="width:100%;" /></div>
+                                <div style="right:0; position:absolute;background-color: #2a68d8;color: white;padding: 2px;bottom: 30px;font-size: 12px;">Week 2</div>
+                                <div style="height:30px; line-height: 20px; padding: 5px; color: #888888;">
+                                   Sales Process and Operation
+                                </div>
+                            </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-4 col-sm-6 box">
+                    <div class="img-box">
+                            <div style="position:relative;">
+                                <img src="{!URLFOR($Resource.Assets_SU,'Assets/onboardingpage_img2..png')}" class="img-responsive grow" style="width:100%;cursor: pointer;" />
+                               <div style="right:0; position:absolute;background-color: #2a68d8;color: white;padding: 2px;bottom: 30px;font-size: 12px;">Week 3</div>
+                                <div class="title">
+                                    Sales Skill
+                                </div>
+                            </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-4 col-sm-6 box">
+                    <div class="img-box">
+                            <div style="position:relative;">
+                                <img src="{!URLFOR($Resource.Assets_SU,'Assets/onboardingpage_img3.png')}" class="img-responsive grow" style="width:100%;cursor: pointer;" />
+                               <div style="right:0; position:absolute;background-color: #2a68d8;color: white;padding: 2px;bottom: 30px;font-size: 12px;">Week 4</div>
+                                <div class="title">
+                                    Playbooks
+                                </div>
+                            </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-4 col-sm-6 box">
+                    <div class="img-box">
+                            <div style="position:relative;">
+                                <img src="{!URLFOR($Resource.Assets_SU,'Assets/onboardingpage_img4.png')}" class="img-responsive grow" style="width:100%;cursor: pointer;" />
+                                <div style="right:0; position:absolute;background-color: #2a68d8;color: white;padding: 2px;bottom: 30px;font-size: 12px;">Week 5</div>
+                                <div class="title">
+                                   Value and Benifits
+                                </div>
+                            </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-4 col-sm-6 box">
+                    <div class="img-box">
+                            <div style="position:relative;">
+                                <img src="{!URLFOR($Resource.Assets_SU,'Assets/onboardingpage_img5.png')}" class="img-responsive grow" style="width:100%;cursor: pointer;" />
+                                <div style="right:0; position:absolute;background-color: #2a68d8;color: white;padding: 2px;bottom: 30px;font-size: 12px;">Week 6</div>
+                                <div class="title">
+                                    Case Studies
+                                </div>
+                            </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-4 col-sm-6 box">
+                    <div class="img-box">
+                            <div style="position:relative;">
+                                <img src="{!URLFOR($Resource.Assets_SU,'Assets/onboardingpage_img6.png')}" class="img-responsive grow" style="width:100%;cursor: pointer;" />
+                                <div style="right:0; position:absolute;background-color: #2a68d8;color: white;padding: 2px;bottom: 30px;font-size: 12px;">Week 7</div>
+                                <div class="title">
+                                    Competition
+                                </div>
+                            </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-4 col-sm-6 box">
+                    <div class="img-box">
+                            <div style="position:relative;">
+                                <img src="{!URLFOR($Resource.Assets_SU,'Assets/onboardingpage_img7.png')}" class="img-responsive grow" style="width:100%;cursor: pointer;" />
+                                <div style="right:0; position:absolute;background-color: #2a68d8;color: white;padding: 2px;bottom: 30px;font-size: 12px;">Week 8</div>
+                                <div class="title">
+                                   Product
+                                </div>
+                            </div>
+                    </div>
+                </div>
+                 <div class="col-lg-3 col-md-4 col-sm-6 box">
+                    <div class="img-box">
+                            <div style="position:relative;">
+                                <img src="{!URLFOR($Resource.Assets_SU,'Assets/2.-Prospecting-Never-Cold...png')}" class="img-responsive grow" style="width:100%;cursor: pointer;" />
+                                <div style="right:0; position:absolute;background-color: #2a68d8;color: white;padding: 2px;bottom: 30px;font-size: 12px;">Week 9</div>
+                                <div class="title">
+                                  Industry
+                                </div>
+                            </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+         <div class="container" id="body-contain_main-list" style="display:none;">
+           <div class="row">
+                <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 remove-padding list-box">
+                    <div class=" row">
+                        <div class="col-lg-10 col-md-10 col-sm-9 col-xs-12">
+                                <div class="col-lg-2 col-md-2 col-sm-2 col-xs-4 erase-padding remove-padding">
+                                    <div class="list-item-img-box" id="sales_u_list" onclick="appendText('Sales University')">
+                                    <img src="{!URLFOR($Resource.Assets_SU,'Assets/onboardingpage_img8.png')}" class="img-responsive grow" style="width:100%;cursor: pointer;" />
+                                     <div style="right:0; position:absolute;background-color: #2a68d8;color: white;padding: 2px;bottom: 0px;font-size: 12px;">Week 1</div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-10 col-md-10 col-sm-10 col-xs-8">
+                                    <div class="list-item-title-box">
+                                        <div class="list-item-title set-small-font rize-hight">
+                                          Sales University
+                                        </div>
+                                    </div>
+                                </div>
+                        </div>
+                        <div class="col-lg-2 col-md-2 col-sm-3 hidden-xs  erase-padding ">
+                            <div class="list-item-title-box">
+                                <div class="list-item-title  rize-hight">
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/like_icon.png')}" style="width:100%" />
+                                    </div>
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'/Assets/comment_icon.png')}" width="100%" />
+                                    </div>
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/arrow_icon.png')}" width="100%" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+           <div class="row">
+                <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 remove-padding list-box">
+                    <div class=" row">
+                        <div class="col-lg-10 col-md-10 col-sm-9 col-xs-12">
+                            <a href="#">
+                                <div class="col-lg-2 col-md-2 col-sm-2 col-xs-4 erase-padding remove-padding">
+                                    <div class="list-item-img-box">
+                                    <img src="{!URLFOR($Resource.Assets_SU,'Assets/onboardingpage_img1.png')}" class="img-responsive grow" style="width:100%;cursor: pointer;" />
+                                     <div style="right:0; position:absolute;background-color: #2a68d8;color: white;padding: 2px;bottom: 0px;font-size: 12px;">Week 2</div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-10 col-md-10 col-sm-10 col-xs-8">
+                                    <div class="list-item-title-box">
+                                        <div class="list-item-title set-small-font rize-hight">
+                                       Sales Process and Operation
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-lg-2 col-md-2 col-sm-3 hidden-xs  erase-padding ">
+                            <div class="list-item-title-box">
+                                <div class="list-item-title  rize-hight">
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/like_icon.png')}" style="width:100%" />
+                                    </div>
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'/Assets/comment_icon.png')}" width="100%" />
+                                    </div>
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/arrow_icon.png')}" width="100%" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+           <div class="row">
+                <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 remove-padding list-box">
+                    <div class=" row">
+                        <div class="col-lg-10 col-md-10 col-sm-9 col-xs-12">
+                            <a href="#">
+                                <div class="col-lg-2 col-md-2 col-sm-2 col-xs-4 erase-padding remove-padding">
+                                    <div class="list-item-img-box">
+                                    <img src="{!URLFOR($Resource.Assets_SU,'Assets/onboardingpage_img2..png')}" class="img-responsive grow" style="width:100%;cursor: pointer;" />
+                                     <div style="right:0; position:absolute;background-color: #2a68d8;color: white;padding: 2px;bottom: 0px;font-size: 12px;">Week 3</div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-10 col-md-10 col-sm-10 col-xs-8">
+                                    <div class="list-item-title-box">
+                                        <div class="list-item-title set-small-font rize-hight">
+                                        Sales Skill
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-lg-2 col-md-2 col-sm-3 hidden-xs  erase-padding ">
+                            <div class="list-item-title-box">
+                                <div class="list-item-title  rize-hight">
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/like_icon.png')}" style="width:100%" />
+                                    </div>
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'/Assets/comment_icon.png')}" width="100%" />
+                                    </div>
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/arrow_icon.png')}" width="100%" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div> 
+           <div class="row">
+                <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 remove-padding list-box">
+                    <div class=" row">
+                        <div class="col-lg-10 col-md-10 col-sm-9 col-xs-12">
+                            <a href="#">
+                                <div class="col-lg-2 col-md-2 col-sm-2 col-xs-4 erase-padding remove-padding">
+                                    <div class="list-item-img-box">
+                                    <img src="{!URLFOR($Resource.Assets_SU,'Assets/onboardingpage_img3.png')}" class="img-responsive grow" style="width:100%;cursor: pointer;" />
+                                     <div style="right:0; position:absolute;background-color: #2a68d8;color: white;padding: 2px;bottom: 0px;font-size: 12px;">Week 4</div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-10 col-md-10 col-sm-10 col-xs-8">
+                                    <div class="list-item-title-box">
+                                        <div class="list-item-title set-small-font rize-hight">
+                                          Playbooks
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-lg-2 col-md-2 col-sm-3 hidden-xs  erase-padding ">
+                            <div class="list-item-title-box">
+                                <div class="list-item-title  rize-hight">
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/like_icon.png')}" style="width:100%" />
+                                    </div>
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'/Assets/comment_icon.png')}" width="100%" />
+                                    </div>
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/arrow_icon.png')}" width="100%" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div> 
+           <div class="row">
+                <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 remove-padding list-box">
+                    <div class=" row">
+                        <div class="col-lg-10 col-md-10 col-sm-9 col-xs-12">
+                            <a href="#">
+                                <div class="col-lg-2 col-md-2 col-sm-2 col-xs-4 erase-padding remove-padding">
+                                    <div class="list-item-img-box">
+                                    <img src="{!URLFOR($Resource.Assets_SU,'Assets/onboardingpage_img4.png')}" class="img-responsive grow" style="width:100%;cursor: pointer;" />
+                                     <div style="right:0; position:absolute;background-color: #2a68d8;color: white;padding: 2px;bottom: 0px;font-size: 12px;">Week 5</div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-10 col-md-10 col-sm-10 col-xs-8">
+                                    <div class="list-item-title-box">
+                                        <div class="list-item-title set-small-font rize-hight">
+                                          Value and Benifits
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-lg-2 col-md-2 col-sm-3 hidden-xs  erase-padding ">
+                            <div class="list-item-title-box">
+                                <div class="list-item-title  rize-hight">
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/like_icon.png')}" style="width:100%" />
+                                    </div>
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'/Assets/comment_icon.png')}" width="100%" />
+                                    </div>
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/arrow_icon.png')}" width="100%" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+           <div class="row">
+                <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 remove-padding list-box">
+                    <div class=" row">
+                        <div class="col-lg-10 col-md-10 col-sm-9 col-xs-12">
+                            <a href="#">
+                                <div class="col-lg-2 col-md-2 col-sm-2 col-xs-4 erase-padding remove-padding">
+                                    <div class="list-item-img-box">
+                                    <img src="{!URLFOR($Resource.Assets_SU,'Assets/onboardingpage_img5.png')}" class="img-responsive grow" style="width:100%;cursor: pointer;" />
+                                     <div style="right:0; position:absolute;background-color: #2a68d8;color: white;padding: 2px;bottom: 0px;font-size: 12px;">Week 6</div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-10 col-md-10 col-sm-10 col-xs-8">
+                                    <div class="list-item-title-box">
+                                        <div class="list-item-title set-small-font rize-hight">
+                                          Case Studies
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-lg-2 col-md-2 col-sm-3 hidden-xs  erase-padding ">
+                            <div class="list-item-title-box">
+                                <div class="list-item-title  rize-hight">
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/like_icon.png')}" style="width:100%" />
+                                    </div>
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'/Assets/comment_icon.png')}" width="100%" />
+                                    </div>
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/arrow_icon.png')}" width="100%" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+           <div class="row">
+                <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 remove-padding list-box">
+                    <div class=" row">
+                        <div class="col-lg-10 col-md-10 col-sm-9 col-xs-12">
+                            <a href="#">
+                                <div class="col-lg-2 col-md-2 col-sm-2 col-xs-4 erase-padding remove-padding">
+                                    <div class="list-item-img-box">
+                                    <img src="{!URLFOR($Resource.Assets_SU,'Assets/onboardingpage_img6.png')}" class="img-responsive grow" style="width:100%;cursor: pointer;" />
+                                     <div style="right:0; position:absolute;background-color: #2a68d8;color: white;padding: 2px;bottom: 0px;font-size: 12px;">Week 7</div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-10 col-md-10 col-sm-10 col-xs-8">
+                                    <div class="list-item-title-box">
+                                        <div class="list-item-title set-small-font rize-hight">
+                                        Competition
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-lg-2 col-md-2 col-sm-3 hidden-xs  erase-padding ">
+                            <div class="list-item-title-box">
+                                <div class="list-item-title  rize-hight">
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/like_icon.png')}" style="width:100%" />
+                                    </div>
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'/Assets/comment_icon.png')}" width="100%" />
+                                    </div>
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/arrow_icon.png')}" width="100%" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+           <div class="row">
+                <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 remove-padding list-box">
+                    <div class=" row">
+                        <div class="col-lg-10 col-md-10 col-sm-9 col-xs-12">
+                            <a href="#">
+                                <div class="col-lg-2 col-md-2 col-sm-2 col-xs-4 erase-padding remove-padding">
+                                    <div class="list-item-img-box">
+                                    <img src="{!URLFOR($Resource.Assets_SU,'Assets/onboardingpage_img7.png')}" class="img-responsive grow" style="width:100%;cursor: pointer;" />
+                                     <div style="right:0; position:absolute;background-color: #2a68d8;color: white;padding: 2px;bottom: 0px;font-size: 12px;">Week 8</div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-10 col-md-10 col-sm-10 col-xs-8">
+                                    <div class="list-item-title-box">
+                                        <div class="list-item-title set-small-font rize-hight">
+                                         Product
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-lg-2 col-md-2 col-sm-3 hidden-xs  erase-padding ">
+                            <div class="list-item-title-box">
+                                <div class="list-item-title  rize-hight">
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/like_icon.png')}" style="width:100%" />
+                                    </div>
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'/Assets/comment_icon.png')}" width="100%" />
+                                    </div>
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/arrow_icon.png')}" width="100%" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+           <div class="row">
+                <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 remove-padding list-box">
+                    <div class=" row">
+                        <div class="col-lg-10 col-md-10 col-sm-9 col-xs-12">
+                            <a href="#">
+                                <div class="col-lg-2 col-md-2 col-sm-2 col-xs-4 erase-padding remove-padding">
+                                    <div class="list-item-img-box">
+                                    <img src="{!URLFOR($Resource.Assets_SU,'Assets/2.-Prospecting-Never-Cold...png')}" class="img-responsive grow" style="width:100%;cursor: pointer;" />
+                                     <div style="right:0; position:absolute;background-color: #2a68d8;color: white;padding: 2px;bottom: 0px;font-size: 12px;">Week 9</div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-10 col-md-10 col-sm-10 col-xs-8">
+                                    <div class="list-item-title-box">
+                                        <div class="list-item-title set-small-font rize-hight">
+                                         Industry
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-lg-2 col-md-2 col-sm-3 hidden-xs  erase-padding ">
+                            <div class="list-item-title-box">
+                                <div class="list-item-title  rize-hight">
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/like_icon.png')}" style="width:100%" />
+                                    </div>
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'/Assets/comment_icon.png')}" width="100%" />
+                                    </div>
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/arrow_icon.png')}" width="100%" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+
+        
+        
+        <div class="container" id="body-contain" style="display:none">
+            <div class="row">
+         <apex:repeat value="{!dto.orginfo}" var="org">
+             <apex:repeat value="{!org.libraryinfo}" var="lib">
+                 <apex:repeat value="{!lib.channelinfo}" var="chn">
+                <div class="col-lg-3 col-md-4 col-sm-6 box" onclick="getSubject({!chn.channelid})">
+                    <div class="img-box">
+                            <div style="position:relative;" onclick="appendText(' > {!chn.channelurl}')">
+                                <img src="https://storage.googleapis.com/cdn.wagmob.com/library/images/{!chn.channelimage}" class="img-responsive grow" style="width:100%;cursor: pointer;" />
+                                <img src="{!URLFOR($Resource.Assets_SU,'Assets/lock-02.png')}" style="top:0; right:0; position:absolute;display:none" />
+                                <div class="title">
+                               <apex:outputText value="{!chn.channelurl}"/>
+                                </div>
+                            </div>
+                       </div>
+                    </div>  
+                 </apex:repeat>
+             </apex:repeat>
+         </apex:repeat>
+            </div>
+        </div>
+        
+        <div class="container" id="list_view_contain">
+             <apex:repeat value="{!dto.orginfo}" var="org">
+               <apex:repeat value="{!org.libraryinfo}" var="lib">
+                  <apex:repeat value="{!lib.channelinfo}" var="chn">
+            <div class="row">
+                <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 remove-padding list-box">
+                    <div class=" row">
+                        <div class="col-lg-10 col-md-10 col-sm-9 col-xs-12" onclick="getSubject({!chn.channelid})">
+                                <div class="col-lg-2 col-md-2 col-sm-2 col-xs-4 erase-padding remove-padding">
+                                    <div class="list-item-img-box" onclick="appendText(' > {!chn.channelurl}')">
+                                        <img src="https://storage.googleapis.com/cdn.wagmob.com/library/images/{!chn.channelimage}" class="img-responsive" style="width:100%;cursor: pointer;" />
+                                    </div>
+                                </div>
+                                <div class="col-lg-10 col-md-10 col-sm-10 col-xs-8">
+                                    <div class="list-item-title-box">
+                                        <div class="list-item-title set-small-font rize-hight">
+                                           <apex:outputText value="{!chn.channelurl}"/>
+                                        </div>
+                                    </div>
+                                </div>
+                        </div>
+                        <div class="col-lg-2 col-md-2 col-sm-3 hidden-xs  erase-padding ">
+                            <div class="list-item-title-box">
+                                <div class="list-item-title  rize-hight">
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/like_icon.png')}" style="width:100%" />
+                                    </div>
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'/Assets/comment_icon.png')}" width="100%" />
+                                    </div>
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/arrow_icon.png')}" width="100%" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                </apex:repeat>
+             </apex:repeat>
+         </apex:repeat>
+        </div>
+        
+        
+    <apex:form id="frm"> 
+       <div class="container" id="channel">     
+       <apex:outputPanel id="channel_resultPanel">
+           <apex:actionStatus startText="requesting..." stopText="" id="channel_myStatus" >
+                <apex:facet name="start">
+                <div class="waitingSearchDiv" id="el_loading" style="background-color: #fbfbfb;
+                       height: 100%;opacity:0.65;width:100%;"> 
+                    <div class="waitingHolder" style="top: 74.2px; width: 91px;">
+                        <img class="waitingImage" src="/img/loading.gif" title="Please Wait..." />
+                        <span class="waitingDescription">Please Wait...</span>
+                    </div>
+                </div>
+            </apex:facet>
+          </apex:actionStatus>
+           <div id="grid_view_channel">
+           <div class="row">
+               <apex:repeat value="{!dto.orginfo}" var="org">
+                   <apex:repeat value="{!org.libraryinfo}" var="lib">
+                      <apex:repeat value="{!lib.channelinfo}" var="chn">
+                         <apex:outputPanel rendered="{!chn.channelid == channelId}">  
+                             <apex:repeat value="{!chn.subjectinfo}" var="sub">
+               <div class="col-lg-3 col-md-4 col-sm-6 box"  onclick="getMileStone({!sub.uniquefolderid},'{!sub.subkey}')">
+                    <div class="img-box">
+                        <div style="position:relative;" onclick="appendText(' > {!sub.title}')">
+                            <img src="https://storage.googleapis.com/cdn.wagmob.com/library/images/{!sub.imageview}" class="img-responsive grow" style="width:100%;cursor: pointer;" />
+                             <div style="right:0; position:absolute;top: 0;width: 30px;"></div>
+                             <div class="title"><apex:outputText value="{!sub.title}"/></div>
+                        </div>
+                     </div>
+                  </div>
+                    </apex:repeat>
+               </apex:outputPanel>          
+          </apex:repeat>
+             </apex:repeat>
+                </apex:repeat>  
+                <div class="col-lg-3 col-md-4 col-sm-6 box">
+                    <div class="img-box">
+                      <div style="position:relative;"><img src="{!URLFOR($Resource.Assets_SU,'Assets/023.png')}" class="img-responsive grow" style="width:100%" /></div>
+                    </div>
+                </div>
+            </div>
+           </div>
+           <div id="list_view_channel">
+            <apex:repeat value="{!dto.orginfo}" var="org">
+              <apex:repeat value="{!org.libraryinfo}" var="lib">
+                 <apex:repeat value="{!lib.channelinfo}" var="chn">
+                   <apex:outputPanel rendered="{!chn.channelid == channelId}">  
+                     <apex:repeat value="{!chn.subjectinfo}" var="sub">   
+                     <div class="row">
+                   <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 remove-padding list-box">
+                    <div class=" row">
+                        <div class="col-lg-10 col-md-10 col-sm-9 col-xs-12" onclick="getMileStone({!sub.uniquefolderid},'{!sub.subkey}')">
+                                <div class="col-lg-2 col-md-2 col-sm-2 col-xs-4 erase-padding remove-padding">
+                                    <div class="list-item-img-box" onclick="appendText(' > {!sub.title}')">
+                                        <img src="https://storage.googleapis.com/cdn.wagmob.com/library/images/{!sub.imageview}" class="img-responsive" style="width:100%;cursor: pointer;" />
+                                    </div>
+                                </div>
+                                <div class="col-lg-10 col-md-10 col-sm-10 col-xs-8">
+                                    <div class="list-item-title-box">
+                                        <div class="list-item-title set-small-font rize-hight">
+                                           <apex:outputText value="{!sub.title}"/>
+                                        </div>
+                                    </div>
+                                </div>
+                        </div>
+                        <div class="col-lg-2 col-md-2 col-sm-3 hidden-xs  erase-padding ">
+                            <div class="list-item-title-box">
+                                <div class="list-item-title  rize-hight">
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/like_icon.png')}" style="width:100%" />
+                                    </div>
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'/Assets/comment_icon.png')}" width="100%" />
+                                    </div>
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/arrow_icon.png')}" width="100%" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                  </div>
+                      </div>
+                       </apex:repeat>
+                      </apex:outputPanel>
+                   </apex:repeat>
+                </apex:repeat>
+           </apex:repeat>
+           </div>
+
+        </apex:outputPanel> 
+        </div>
+    
+       <div class="container" id="milestone">   
+         <apex:outputPanel id="resultPanel">
+                <script>
+                function backByDiv(){
+                  if(arrDiv.length == 1){ 
+                   $("#title").html('');    
+                   $('#body-contain').hide(); 
+                   $('.site-map').hide();   
+                   $('#body-contain_main').show();
+                   $('.grid-type').show();      
+                   arrDiv.length--;    
+                    }
+                 if(arrDiv.length == 2){ 
+                  $("#title").html(arrDiv[0]);
+                  $("#channel").hide();
+                  $('#body-contain').show();   
+                  arrDiv.length--;    
+                    }
+                 if(arrDiv.length == 3){
+                  $("#title").html(arrDiv[0]+arrDiv[1]);   
+                  $('#milestone').hide();
+                  $("#channel").show();
+                  arrDiv.length--;    
+                    }   
+                  if(arrDiv.length == 4){
+                  $("#title").html(arrDiv[0]+arrDiv[1]+arrDiv[2]);
+                  getMileStoneByFolderId('{!folderId}','{!subkey}');  
+                  $('#sub-milestone').hide();
+                  $('#milestone').show();
+                  arrDiv.length--;    
+                    }
+                    getBackDiv();
+                    }
+                </script>  
+                <apex:actionStatus startText="requesting..." stopText="" id="myStatus" >
+                <apex:facet name="start">
+                <div class="waitingSearchDiv" id="el_loading" style="background-color: #fbfbfb;
+                       height: 100%;opacity:0.65;width:100%;"> 
+                    <div class="waitingHolder" style="top: 74.2px; width: 91px;">
+                        <img class="waitingImage" src="/img/loading.gif" title="Please Wait..." />
+                        <span class="waitingDescription">Please Wait...</span>
+                    </div>
+                </div>
+            </apex:facet>
+          </apex:actionStatus>
+           <div class="row" id="grid_view_milestone">
+              <apex:repeat value="{!milestonelist}" var="list">
+                  <div class="col-lg-3 col-md-4 col-sm-6 box">
+                    <div class="img-box" onclick="appendText(' > {!list.title}')">
+                  <div style="position:relative;" onclick="getSubMilestone({!list.containerid})">    
+                  <img src="https://storage.googleapis.com/cdn.wagmob.com/subject/{!folderId}/tile/180/{!list.view}"  class="img-responsive grow" style="width:100%;border-radius: 50%;border:{!IF(contains(milestonestatus, list.containerid), '2px solid #91c750;', '')};cursor: pointer;" />
+                   <img src="{!URLFOR($Resource.Assets_SU,'Assets/chekmark_icon.png')}"  style="position: absolute;top: 10px;left: 145px;width: 25px;display:{!IF(contains(milestonestatus, list.containerid), 'block', 'none')}"/>
+                      <div style="right:0; position:absolute;top: 0;width: 30px;"></div>
+                             <div class="title"><apex:outputText value="{!list.title}"/></div>
+                        </div>
+                     </div>
+                  </div>                 
+             </apex:repeat>   
+           </div> 
+         <div id="list_view_milestone">
+                     <apex:repeat value="{!milestonelist}" var="list">   
+                     <div class="row">
+                   <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 remove-padding list-box">
+                    <div class=" row">
+                        <div class="col-lg-10 col-md-10 col-sm-9 col-xs-12" onclick="getSubMilestone({!list.containerid})">
+                                <div class="col-lg-2 col-md-2 col-sm-2 col-xs-4 erase-padding remove-padding">
+                                    <div class="list-item-img-box" onclick="appendText(' > {!list.title}')">
+                                        <img src="https://storage.googleapis.com/cdn.wagmob.com/subject/{!folderId}/tile/180/{!list.view}" class="img-responsive" style="width:100%;cursor: pointer;" />
+                                    </div>
+                                </div>
+                                <div class="col-lg-10 col-md-10 col-sm-10 col-xs-8">
+                                    <div class="list-item-title-box">
+                                        <div class="list-item-title set-small-font rize-hight">
+                                           <apex:outputText value="{!list.title}"/>
+                                        </div>
+                                    </div>
+                                </div>
+                        </div>
+                        <div class="col-lg-2 col-md-2 col-sm-3 hidden-xs  erase-padding ">
+                            <div class="list-item-title-box">
+                                <div class="list-item-title  rize-hight">
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/like_icon.png')}" style="width:100%" />
+                                    </div>
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'/Assets/comment_icon.png')}" width="100%" />
+                                    </div>
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/arrow_icon.png')}" width="100%" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                  </div>
+                </div>
+               </apex:repeat>
+             </div>   
+        </apex:outputPanel> 
+        </div>
+
+       <div class="container" id="sub-milestone"> 
+             
+            <apex:outputPanel id="sub_milestone_resultPanel">
+             <apex:actionStatus startText="requesting..." stopText="" id="sub_milestone_myStatus" >
+                <apex:facet name="start">
+                <div class="waitingSearchDiv" id="el_loading" style="background-color: #fbfbfb;
+                       height: 100%;opacity:0.65;width:100%;"> 
+                    <div class="waitingHolder" style="top: 74.2px; width: 91px;">
+                        <img class="waitingImage" src="/img/loading.gif" title="Please Wait..." />
+                        <span class="waitingDescription">Please Wait...</span>
+                    </div>
+                </div>
+            </apex:facet>
+           </apex:actionStatus>  
+                <div class="row" id="grid_view_submilestone">
+                 <apex:repeat value="{!milestonelist}" var="list">
+                    <apex:repeat value="{!list.subitem}" var="sub">
+                             <apex:outputPanel rendered="{!sub.parentid == parentid}">
+                  <div class="col-lg-3 col-md-4 col-sm-6 box">
+                    <div class="img-box" onclick="appendText(' > {!sub.subtitle}')">
+                  <div style="position:relative;" onclick="getTask({!sub.containerid})">
+                  <img src="https://storage.googleapis.com/cdn.wagmob.com/subject/{!folderId}/tile/180/{!sub.subimageview}"  class="img-responsive grow" style="width:150px;height:150px;border-radius: 50%;border:{!IF(contains(status, sub.containerid), '2px solid #91c750;', '')};cursor: pointer;" />
+                   <img src="{!URLFOR($Resource.Assets_SU,'Assets/chekmark_icon.png')}"  style="position: absolute;top: 0;left: 100px;width: 25px;display:{!IF(contains(status, sub.containerid), 'block', 'none')}"/>
+                      <div style="right:0; position:absolute;top: 0;width: 30px;"></div>
+                             <div class="title"><apex:outputText value="{!sub.subtitle}"/></div>
+                        </div>
+                     </div>
+                  </div> 
+                   </apex:outputPanel>
+                  </apex:repeat>
+                 </apex:repeat>  
+                </div>
+              <div id="list_view_submilestone">
+                     <apex:repeat value="{!milestonelist}" var="list"> 
+                         <apex:repeat value="{!list.subitem}" var="sub">
+                             <apex:outputPanel rendered="{!sub.parentid == parentid}">    
+                 <div class="row">
+                   <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 remove-padding list-box">
+                    <div class=" row">
+                        <div class="col-lg-10 col-md-10 col-sm-9 col-xs-12" onclick="getTask({!sub.containerid})">
+                                <div class="col-lg-2 col-md-2 col-sm-2 col-xs-4 erase-padding remove-padding">
+                                    <div class="list-item-img-box" onclick="appendText(' > {!sub.subtitle}')">
+                                    <img src="https://storage.googleapis.com/cdn.wagmob.com/subject/{!folderId}/tile/180/{!sub.subimageview}"  class="img-responsive grow" style="width:150px;height:150px;border-radius: 50%;border:{!IF(contains(status, sub.containerid), '2px solid #91c750;', '')};cursor: pointer;" />
+                                    <img src="{!URLFOR($Resource.Assets_SU,'Assets/chekmark_icon.png')}"  style="position: absolute;top: 0;left: 100px;width: 25px;display:{!IF(contains(status, sub.containerid), 'block', 'none')}"/>
+                                    </div>
+                                </div>
+                                <div class="col-lg-10 col-md-10 col-sm-10 col-xs-8">
+                                    <div class="list-item-title-box">
+                                        <div class="list-item-title set-small-font rize-hight">
+                                           <apex:outputText value="{!sub.subtitle}"/>
+                                        </div>
+                                    </div>
+                                </div>
+                           </div>
+                        <div class="col-lg-2 col-md-2 col-sm-3 hidden-xs  erase-padding ">
+                            <div class="list-item-title-box">
+                                <div class="list-item-title  rize-hight">
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/like_icon.png')}" style="width:100%" />
+                                    </div>
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'/Assets/comment_icon.png')}" width="100%" />
+                                    </div>
+                                    <div class="col-lg-4 col-md-4 col-sm-4 remove-padding">
+                                        <img src="{!URLFOR($Resource.Assets_SU,'Assets/arrow_icon.png')}" width="100%" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                  </div>
+                </div>
+                           </apex:outputPanel>
+                         </apex:repeat>       
+                       </apex:repeat>
+             </div>     
+            </apex:outputPanel>
+        </div>
+         
+        
+       <div class="container" id="body-contain_task"> 
+            
+            <apex:outputPanel id="task_resultPanel">
+                <script>
+               function getBackDiv(){ 
+                if(arrDiv.length == 5){
+                  $("#title").html(arrDiv[0]+arrDiv[1]+arrDiv[2]+arrDiv[3]);
+                  getSubMilestoneByParentId('{!parentid}');  
+                  $('#body-contain_task').hide();
+                  $('#sub-milestone').show();
+                  arrDiv.length--;    
+                    } 
+                  if(arrDiv.length == 6){
+                  $("#title").html(arrDiv[0]+arrDiv[1]+arrDiv[2]+arrDiv[3]+arrDiv[4]);    
+                  getTaskByContainerId('{!taskcontainerid}');
+                  $('.video-box').hide();
+                  $('#quiz-box').hide(); 
+                  $('#tutorial-box').hide();
+                  $('#workbook-box').hide();
+                  $('#body-contain_task').show();
+                  arrDiv.length--;
+                  $(function() {
+                   var iframe = $('#video_tag')[0];
+                   var player = $f(iframe);
+                   var status = $('.status');
+                   player.addEvent('ready', function() {
+                   status.text('ready');
+                   player.api("pause");
+                   });
+                   }); 
+                    }
+                  $('.video-box').hide();
+                  $('#quiz-box').hide(); 
+                  $('#tutorial-box').hide();
+                  $('#workbook-box').hide();
+                   }
+                </script>    
+            <apex:actionStatus startText="requesting..." stopText="" id="task_myStatus" >
+                <apex:facet name="start">
+                <div class="waitingSearchDiv" id="el_loading" style="background-color: #fbfbfb;
+                       height: 100%;opacity:0.65;width:100%;"> 
+                    <div class="waitingHolder" style="top: 74.2px; width: 91px;">
+                        <img class="waitingImage" src="/img/loading.gif" title="Please Wait..." />
+                        <span class="waitingDescription">Please Wait...</span>
+                    </div>
+                </div>
+            </apex:facet>
+           </apex:actionStatus>
+                 <div class="row">
+                <apex:repeat value="{!milestonelist}" var="list">
+                    <apex:repeat value="{!list.subitem}" var="sub">
+                       <apex:repeat value="{!sub.video}" var="video">
+                          <apex:outputPanel rendered="{!video.containerid == taskcontainerid}">  
+                  <div class="col-lg-3 col-md-4 col-sm-6 box">
+                    <div class="img-box" onclick="appendText(' > {!video.elementtitle}')">            
+                  <div style="position:relative;" onclick="getVideo({!video.taskid},{!video.containerid},{!video.ismandatory})">             
+                  <img src="https://storage.googleapis.com/cdn.wagmob.com/library/images/video.png"  class="img-responsive grow" style="width:150px;height:150px;border-radius: 50%;border:{!IF(contains(getProgress, video.taskid), '2px solid #91c750;', '')};cursor: pointer;" />
+                   <img src="{!URLFOR($Resource.Assets_SU,'Assets/chekmark_icon.png')}"  style="position: absolute;top: 0;left: 100px;width: 25px;display:{!IF(contains(getProgress, video.taskid), 'block', 'none')}"/>
+                      <div style="right:0; position:absolute;top: 0;width: 30px;"></div>
+                      <div class="title"><apex:outputText value="{!video.elementtitle}"/></div>
+                   </div>
+                 </div>
+                  </div> 
+                </apex:outputPanel> 
+               </apex:repeat>
+                 <apex:repeat value="{!sub.tutorial}" var="tutorial">
+                 <apex:outputPanel rendered="{!tutorial.containerid == taskcontainerid}">  
+                  <div class="col-lg-3 col-md-4 col-sm-6 box">
+                    <div class="img-box" onclick="appendText(' > {!tutorial.elementtitle}')">
+                  <div style="position:relative;" onclick="getTutorial({!tutorial.taskid},{!tutorial.containerid},{!tutorial.ismandatory})">    
+                  <img src="https://storage.googleapis.com/cdn.wagmob.com/library/images/tutorial.png"  class="img-responsive grow" style="width:150px;height:150px;border-radius: 50%;border:{!IF(contains(getProgress, tutorial.taskid), '2px solid #91c750;', '')};cursor: pointer;" />
+                    <img src="{!URLFOR($Resource.Assets_SU,'Assets/chekmark_icon.png')}"  style="position: absolute;top: 0;left: 100px;width: 25px;display:{!IF(contains(getProgress, tutorial.taskid), 'block', 'none')}"/>
+                      <div style="right:0; position:absolute;top: 0;width: 30px;"></div>
+                             <div class="title"><apex:outputText value="{!tutorial.elementtitle}"/></div>
+                        </div>
+                     </div>
+                  </div> 
+                </apex:outputPanel> 
+               </apex:repeat>
+               <apex:repeat value="{!sub.quiz}" var="quiz">
+                 <apex:outputPanel rendered="{!quiz.containerid == taskcontainerid}">  
+                  <div class="col-lg-3 col-md-4 col-sm-6 box">
+                    <div class="img-box" onclick="appendText(' > {!quiz.elementtitle}')">
+                  <div style="position:relative;" onclick="getQuiz({!folderId},'{!quiz.quizview}',{!quiz.ismandatory},{!quiz.taskid})">    
+                  <img src="https://storage.googleapis.com/cdn.wagmob.com/library/images/quiz.png"  class="img-responsive grow" style="width:150px;height:150px;border-radius: 50%;border:{!IF(contains(getProgress, quiz.taskid), '2px solid #91c750;', '')};cursor: pointer;" />
+                  <img src="{!URLFOR($Resource.Assets_SU,'Assets/chekmark_icon.png')}"  style="position: absolute;top: 0;left: 100px;width: 25px;display:{!IF(contains(getProgress, quiz.taskid), 'block', 'none')}"/>
+                      <div style="right:0; position:absolute;top: 0;width: 30px;"></div>
+                             <div class="title"><apex:outputText value="{!quiz.elementtitle}"/></div>
+                        </div>
+                     </div>
+                  </div> 
+                </apex:outputPanel> 
+               </apex:repeat> 
+                   <apex:repeat value="{!sub.workbook}" var="work">
+                 <apex:outputPanel rendered="{!work.containerid == taskcontainerid}">  
+                  <div class="col-lg-3 col-md-4 col-sm-6 box">
+                    <div class="img-box" onclick="appendText(' > {!work.elementtitle}')">
+                  <div style="position:relative;" onclick="getWorkbook({!work.taskid},{!work.containerid},{!work.ismandatory})">    
+                  <img src="https://storage.googleapis.com/cdn.wagmob.com/library/images/workbook.png"  class="img-responsive grow" style="width:150px;height:150px;border-radius: 50%;border:{!IF(contains(getProgress, work.taskid), '2px solid #91c750;', '')};cursor: pointer;" />
+                 <img src="{!URLFOR($Resource.Assets_SU,'Assets/chekmark_icon.png')}"  style="position: absolute;top: 0;left: 100px;width: 25px;display:{!IF(contains(getProgress, work.taskid), 'block', 'none')}"/>
+                      <div style="right:0; position:absolute;top: 0;width: 30px;"></div>
+                             <div class="title"><apex:outputText value="{!work.elementtitle}"/></div>
+                        </div>
+                     </div>
+                  </div> 
+                </apex:outputPanel> 
+               </apex:repeat>      
+                  </apex:repeat>
+        </apex:repeat> 
+                </div>  
+            </apex:outputPanel>
+        
+            </div>
+            
+<div class="video-box-size video-box" style="display:none;">
+
+            <div style="width:100%; height:500px;">
+           <apex:outputPanel id="video_resultPanel">
+            <apex:actionStatus startText="requesting..." stopText="" id="video_myStatus" >
+                <apex:facet name="start">
+                <div class="waitingSearchDiv" id="el_loading" style="background-color: #fbfbfb;
+                       height: 100%;opacity:0.65;width:100%;"> 
+                    <div class="waitingHolder" style="top: 74.2px; width: 91px;">
+                        <img class="waitingImage" src="/img/loading.gif" title="Please Wait..." />
+                        <span class="waitingDescription">Please Wait...</span>
+                    </div>
+                </div>
+            </apex:facet>
+           </apex:actionStatus>
+                <apex:repeat value="{!milestonelist}" var="list">
+                   <apex:repeat value="{!list.subitem}" var="sub">
+                     <apex:repeat value="{!sub.video}" var="video">
+               <apex:outputPanel rendered="{!video.containerid == containerid && video.taskid == taskId }"> 
+                   <script>
+                   $(function() {
+                   var iframe = $('#video_tag')[0];
+                   var player = $f(iframe);
+                   var status = $('.status');
+                   player.addEvent('ready', function() {
+                   status.text('ready');
+                   player.addEvent('pause', onPause);
+                   player.addEvent('finish', onFinish);
+                   player.addEvent('play', onPlay);
+                   });
+                   $('button').bind('click', function() {
+                   player.api($(this).text().toLowerCase());
+                   });
+                   function onPause() { 
+                    }
+                   function onFinish() {
+                   checkVideoComplete('{!video.taskid}'); 
+                   getBackDiv();
+                   player.api("pause");    
+                   }
+                   function onPlay() {
+                   }
+                   });
+                   </script>
+                 <iframe width="100%" height="500" id="video_tag" src="//player.vimeo.com/video/{!video.videoid}?autoplay=1&autopause=0&api=1&player_id=video_tag&title=0;origin=*" frameborder="0" ></iframe>
+                 </apex:outputPanel> 
+               </apex:repeat>       
+                     </apex:repeat>
+        </apex:repeat> 
+          </apex:outputPanel>
+                </div>
+             <div style="width:100%;min-height:40px;">
+             <a href="javascript:myFunction()"><img src="{!URLFOR($Resource.Assets_SU,'Assets/video_more_btn.png')}" style="float:right;margin-right: 1%;margin-left: 1%;" /></a>
+             <div id="myDropdown" class="dropdown-content">
+                        <ul class="list-group">
+                            <a class="list-group-item" href="#">
+                                <img src="{!URLFOR($Resource.Assets_SU,'Assets/video_download_icon.png')}" height="15px" /> &nbsp;Download
+                            </a>
+                            <a class="list-group-item" href="#">
+                                <img src="{!URLFOR($Resource.Assets_SU,'Assets/video_like_icon.png')}" height="15px" /> &nbsp;Like
+                            </a>
+                            <a class="list-group-item" href="#">
+                                <img src="{!URLFOR($Resource.Assets_SU,'Assets/video_comment_icon.png')}" height="15px" /> &nbsp;Comment
+                            </a>
+                        </ul>
+                    </div>
+                <a><img src="{!URLFOR($Resource.Assets_SU,'Assets/video_expand_btn.png')}" height="25" style="float:right;margin-top: 7px;margin-left: 1%;" /></a>
+                <a><img src="{!URLFOR($Resource.Assets_SU,'Assets/video_share_btn.png')}" height="25" style="float:right;margin-top: 7px;margin-left: 1%;" /></a>
+             </div>
+        </div>
+      
+      <div class="container" id="tutorial-box">
+      <apex:outputPanel id="tuto_resultPanel">
+            <apex:actionStatus startText="requesting..." stopText="" id="tuto_myStatus" >
+                <apex:facet name="start">
+                <div class="waitingSearchDiv" id="el_loading" style="background-color: #fbfbfb;
+                       height: 100%;opacity:0.65;width:100%;"> 
+                    <div class="waitingHolder" style="top: 74.2px; width: 91px;">
+                        <img class="waitingImage" src="/img/loading.gif" title="Please Wait..." />
+                        <span class="waitingDescription">Please Wait...</span>
+                    </div>
+                </div>
+            </apex:facet>
+           </apex:actionStatus>
+           <apex:repeat value="{!milestonelist}" var="list">
+                   <apex:repeat value="{!list.subitem}" var="sub">
+                     <apex:repeat value="{!sub.tutorial}" var="tutorial">
+          <apex:outputPanel rendered="{!tutorial.containerid == containerid && tutorial.taskid == taskId && tutorial.tutorialview != null}">
+          <apex:iframe src="https://storage.googleapis.com/cdn.wagmob.com/subject/{!folderId}/html/{!tutorial.tutorialview}" height="900" scrolling="true"/>       
+         </apex:outputPanel>
+               </apex:repeat>       
+                     </apex:repeat>
+        </apex:repeat>
+          </apex:outputPanel> 
+      </div>   
+            
+      <div class="container" id="workbook-box" style="width:100%;overflow:scroll;"> 
+       <apex:outputPanel id="work_resultPanel">
+            <apex:actionStatus startText="requesting..." stopText="" id="work_myStatus" >
+                <apex:facet name="start">
+                <div class="waitingSearchDiv" id="el_loading" style="background-color: #fbfbfb;
+                       height: 100%;opacity:0.65;width:100%;"> 
+                    <div class="waitingHolder" style="top: 74.2px; width: 91px;">
+                        <img class="waitingImage" src="/img/loading.gif" title="Please Wait..." />
+                        <span class="waitingDescription">Please Wait...</span>
+                    </div>
+                </div>
+            </apex:facet>
+           </apex:actionStatus>
+           <apex:repeat value="{!milestonelist}" var="list">
+                   <apex:repeat value="{!list.subitem}" var="sub">
+                     <apex:repeat value="{!sub.workbook}" var="workbook">
+             <apex:outputPanel rendered="{!workbook.containerid == containerid && workbook.taskid == taskId}">
+          <apex:iframe src="https://storage.googleapis.com/cdn.wagmob.com/subject/{!folderId}/html/{!workbook.workbookfilename}" height="900" scrolling="true"/>       
+         </apex:outputPanel> 
+               </apex:repeat>       
+                     </apex:repeat>
+        </apex:repeat>
+          </apex:outputPanel>
+       </div>  
+            
+      <div class="container" id="quiz-box">
+         
+       <apex:outputPanel id="quiz_resultPanel">
+
+          <script>
+          function getAgainQuiz(){
+            getQuizFileByFloderId('{!folderId}','{!quizFilName}','{!ismandatory}','{!taskid}');
+            timer();
+            } 
+         </script>
+        <apex:outputPanel id="counter">
+          <apex:outputPanel rendered="{!firstframe}"> 
+          <div style="position:absolute;width:105px;left:80px;height:45px;background:#4b4c4c;border-radius:10%;color:#f9f9f9;top: 90px;text-align:center;">Required Score <span>80%</span></div>    
+          <div style="position:absolute;right:90px;width:72px;height:45px;background:#4b4c4c;border-radius:10%;color:#f9f9f9;top: 90px;text-align:center;">Time Left: <span id="time"></span> Sec</div>       
+          </apex:outputPanel>
+           <apex:outputPanel rendered="{!currectanswer == 0}">
+               <div id="hide-ans">
+                   <img src="{!URLFOR($Resource.Assets_SU,'Assets/correct_ans.png')}" style="border: solid;border-style: groove;border-width: 2px;"/>
+               </div>
+           </apex:outputPanel>
+           <apex:outputPanel rendered="{!currectanswer == 1}">
+               <div id="hide-ans">
+                   <img src="{!URLFOR($Resource.Assets_SU,'Assets/Incorrect_ans.png')}" style="border: solid;border-style: groove;border-width: 2px;"/>
+               </div>
+           </apex:outputPanel>
+           <apex:outputPanel rendered="{!quizResult}">     
+           <div class="container" id="result-box" style="width: 1170px;border: solid;border-style: groove;border-width: 2px;margin-top: 36px;">
+            <div class="row">
+                <div class="col-sm-3 col-lg-3 col-md-3" style="margin-top: 36px;margin-bottom: 36px;"> 
+               <apex:outputPanel rendered="{!failResult}">
+              <div style="height:25%;background:rgb(207, 0, 39);color:#FFF;text-align: center;font: 200 48px/200px 'Droid Sans', Arial, 'Helvetica Neue', 'Lucida Grande', sans-serif;font-family: 'Open Sans' !important;">
+                       Fail    
+                </div>
+              </apex:outputPanel>
+              <apex:outputPanel rendered="{!passResult}">      
+               <div style="height:25%;background:rgb(0, 128, 0);color:#FFF;text-align: center;font: 200 48px/200px 'Droid Sans', Arial, 'Helvetica Neue', 'Lucida Grande', sans-serif;font-family: 'Open Sans' !important;">
+                       Pass    
+               </div>
+             </apex:outputPanel>    
+                  <div style="margin-top:10px;height:15%;color:#FFF;text-align:center;background:#606060;font: 200 14px/55px 'Droid Sans', Arial, 'Helvetica Neue', 'Lucida Grande', sans-serif;font-family: 'Open Sans' !important;">
+                   Score (Correct / Total) : {!correctAnswerCount}/{!count}   
+                  </div>
+                 <div style="margin-top:10px;margin-bottom:10px;height:15%;color:#FFF;text-align:center;background:#606060;font: 200 14px/55px 'Droid Sans', Arial, 'Helvetica Neue', 'Lucida Grande', sans-serif;font-family: 'Open Sans' !important;">
+                  Percentage : {!quizPercentage}%
+                 </div>
+                </div>
+                <div class="col-sm-9 col-lg-9 col-md-9" style="margin-top: 36px;margin-bottom: 36px;">
+               <div style="width:100%;height:330px;border:solid;border-style:groove;border-width:2px;">
+                 <p style="margin-bottom:25px;font-size:25px;margin-top:12px;color:#656565;text-align: center;">
+                     You did not pass this test. Please click on the Retake Test button to continue your Training.
+                     </p>
+                     <div style="margin-top:175px;margin-left:305px;"><img style="cursor: pointer;" onclick="getAgainQuiz();" src="{!URLFOR($Resource.Assets_SU,'Assets/continue_training.png')}"/></div>   
+                 </div>      
+                </div>
+              </div>
+          </div>  
+           </apex:outputPanel>     
+          <apex:outputPanel rendered="{!firstframe}">             
+          <apex:iframe src="https://storage.googleapis.com/cdn.wagmob.com/subject/{!folderId}/quiz/webteam_quiz/{!questionfilecombo}"/>      
+          </apex:outputPanel>
+          </apex:outputPanel>
+          <apex:actionFunction name="incrementCounter" action="{!incrementCounter}" rerender="counter" status="counterStatus">
+          <apex:param name="data" assignTo="{!data}" value=""/>
+          </apex:actionFunction>
+      </apex:outputPanel>    
+      </div>   
+        
+        <apex:actionFunction name="checkVideoComplete" action="{!checkVideoComplete}" reRender="video_resultPanel" status="video_myStatus">  
+        <apex:param name="container_id" assignTo="{!taskId}" value="" /> 
+        </apex:actionFunction>
+        <apex:actionFunction name="getSubjectByChannel" action="{!getSubjectByChannel}" reRender="channel_resultPanel" status="channel_myStatus">
+        <apex:param name="channel_id" assignTo="{!channelId}" value="" />   
+        </apex:actionFunction>    
+        <apex:actionFunction name="getMileStoneByFolderId" action="{!getMileStoneByFolderId}" reRender="resultPanel" status="myStatus">
+        <apex:param name="folder_id" assignTo="{!folderId}" value="" />
+        <apex:param name="subkey" assignTo="{!subkey}" value=""/>    
+        </apex:actionFunction>  
+         <apex:actionFunction name="getSubMilestoneByParentId" action="{!getSubMilestoneByParentId}" reRender="sub_milestone_resultPanel" status="sub_milestone_myStatus">
+        <apex:param name="parent_id" assignTo="{!parentid}" value="" />
+        </apex:actionFunction> 
+         <apex:actionFunction name="getTaskByContainerId" action="{!getTaskByContainerId}" reRender="task_resultPanel" status="task_myStatus">
+        <apex:param name="container_id" assignTo="{!taskcontainerid}" value="" />
+        </apex:actionFunction> 
+        <apex:actionFunction name="getVideoByTaskId" action="{!getVideoByTaskId}" reRender="video_resultPanel" status="video_myStatus">
+        <apex:param name="container_id" assignTo="{!taskId}" value="" />   
+        <apex:param name="video_Link" assignTo="{!containerid}" value="" />
+        <apex:param name="is_mandatory" assignTo="{!ismandatory}" value=""/>    
+        </apex:actionFunction> 
+        <apex:actionFunction name="getTutorialByTaskId" action="{!getTutorialByTaskId}" reRender="tuto_resultPanel" status="tuto_myStatus">
+       <apex:param name="container_id" assignTo="{!taskId}" value="" />   
+        <apex:param name="video_Link" assignTo="{!containerid}" value="" />
+        <apex:param name="is_mandatory" assignTo="{!ismandatory}" value=""/>    
+        </apex:actionFunction> 
+        <apex:actionFunction name="getWorkbookByTaskId" action="{!getWorkbookByTaskId}" reRender="work_resultPanel" status="work_myStatus">
+       <apex:param name="container_id" assignTo="{!taskId}" value="" />   
+        <apex:param name="video_Link" assignTo="{!containerid}" value="" />
+        <apex:param name="is_mandatory" assignTo="{!ismandatory}" value=""/>    
+        </apex:actionFunction>
+        <apex:actionFunction name="getQuizFileByFloderId" action="{!getQuizFileByFloderId}" reRender="quiz_resultPanel" status="quiz_myStatus">
+        <apex:param name="container_id" assignTo="{!folderId}" value="" />   
+        <apex:param name="video_Link" assignTo="{!quizFilName}" value="" />
+        <apex:param name="is_mandatory" assignTo="{!ismandatory}" value=""/>
+        <apex:param name="task_id" assignTo="{!taskid}" value="" />    
+        </apex:actionFunction>
+        <apex:actionFunction name="checkAnswer" action="{!checkAnswer}" reRender="ans" status="ans_myStatus">
+        <apex:param name="data" assignTo="{!data}" value="" />   
+        </apex:actionFunction> 
+        </apex:form>   
+
+        <div class="container" id="quiz">
+        <div style="width: 50%;margin-left:25%;margin-top:2%;">
+            <div class="row" style="color:#3673BC;font-family:sans-serif;font-size:25px;">The customer is going to take your call when:
+                <br/><img src="{!URLFOR($Resource.Assets_SU,'Assets/line_image.png')}"/>
+            </div>
+            <div class="row" style="margin-top: 25px;">
+                <div style="position: relative;">
+                    <div class="question"><div class="inner-text">You make it about them </div></div>
+                    <div style="position: absolute;"><div class="circle">A</div></div>
+                </div> 
+            </div>
+            
+            <div class="row" style="margin-top:80px;">
+               <div style="position: relative;">
+                   <div class="question"><div class="inner-text">You ask question</div></div>
+                    <div style="position: absolute;"><div class="circle">B</div></div>
+                </div> 
+            </div>
+            <div class="row" style="margin-top:80px;">
+             <div style="position: relative;">
+                <div class="question"><div class="inner-text">You do extensive research and homework</div></div>
+                    <div style="position: absolute;"><div class="circle">C</div></div>
+                </div> 
+            </div>
+            <div class="row" style="margin-top:80px;">
+                 <div style="position: relative;">
+                     <div class="question"><div class="inner-text">Start with a warm call Start with a warm call Start with a warm call Start with a warm call Start with a warm call</div></div>
+                    <div style="position: absolute;"><div class="circle">D</div></div>
+                </div> 
+            </div>
+        </div>
+        </div>
+        
+        
+        <div class="footer" id="footer">
+            <div class="row">
+                <div class="col-lg-1 col-md-1 col-xs-1 col-sm-1" id="sales_uni_logo">
+                    <img src="{!URLFOR($Resource.Assets_SU,'Assets/SU.png')}" height="45"/>
+                </div>
+                <div class="col-lg-10 col-md-10 col-xs-10 col-sm-10" id="progress_bar">
+                    <span style="display:block;width:50%;text-align:right;font-size: 10px;font-weight: bold;">50%</span>
+                    <div class="progress-container round-xlarge">
+                        <div class="progressbar round-xlarge" style="width:50%"></div>
+                        <div class="profile-pic" style="margin-left:10px">
+                            <img src="{!URLFOR($Resource.Assets_SU,'Images/dp1.jpg')}" />
+                        </div>
+                        <div class="profile-pic" style="margin-left:2%">
+                            <img src="{!URLFOR($Resource.Assets_SU,'Images/dp2.jpg')}" />
+                        </div>
+                        <div class="profile-pic" style="margin-left:10%">
+                            <img src="{!URLFOR($Resource.Assets_SU,'Images/dp3.jpg')}" />
+                        </div>
+                        <div class="profile-pic" style="margin-left:21%">
+                            <img src="{!URLFOR($Resource.Assets_SU,'Images/dp4.jpg')}" />
+                        </div>
+                        <div class="profile-pic" style="margin-left:35%">
+                            <img src="{!URLFOR($Resource.Assets_SU,'Images/dp5.jpg')}" />
+                        </div>
+                        <div class="profile-pic" style="margin-left:40%">
+                            <img src="{!URLFOR($Resource.Assets_SU,'Images/dp6.jpg')}" />
+                        </div>
+                        <div class="profile-pic" style="margin-left:45%">
+                            <img src="{!URLFOR($Resource.Assets_SU,'Images/dp7.jpg')}" />
+                        </div>
+                    </div>
+                </div>
+            <div class="col-lg-1 col-md-1 col-xs-1 col-sm-1" style="margin-left: 15px;">
+                <img src="{!URLFOR($Resource.Assets_SU,'Assets/edcast.png')}" style="float:right; width:75px;margin-top: 8px;" />
+            </div>
+        </div>
+    </div>
+    </div>
+</body>
+</html>
+</apex:page>

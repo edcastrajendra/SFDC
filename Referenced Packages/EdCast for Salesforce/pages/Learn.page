@@ -1,0 +1,682 @@
+<apex:page title="EdCast-Content" controller="edcast.LearnController" action="{!getCourseOfferings}" showChat="false" sidebar="false" tabStyle="Content__tab">
+    <html xmlns="https://www.w3.org/2000/svg" xmlns:xlink="https://www.w3.org/1999/xlink">
+        <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+            <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.Edcast_Resource,'css/edcast_style.css')}"/>
+            <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.Edcast_Resource,'css/custom_style.css')}"/>
+            <link href='https://fonts.googleapis.com/css?family=Lato:400,300,700,700italic,400italic,300italic,100italic,100' rel='stylesheet' type='text/css'/>
+            
+            <link rel="stylesheet" href="{!URLFOR($Resource.Edcast_Resource,'jQueryTagEditor/jquery.tag-editor.css')}"/>
+            <script src="{!URLFOR($Resource.Edcast_Resource,'js/jquery-1.11.1.min.js')}"></script>
+            <script src="{!URLFOR($Resource.Edcast_Resource,'js/jquery-ui.min.js')}"></script>
+            <script src="{!URLFOR($Resource.Edcast_Resource,'jQueryTagEditor/jquery.caret.min.js')}"></script>            
+            <script src="{!URLFOR($Resource.Edcast_Resource,'jQueryTagEditor/jquery.tag-editor.min.js')}"></script>
+            
+            
+            <style>
+                .noSidebarCell {
+                    padding-top: 10px;
+                    background: #fcfcfc !important;
+                }
+                .icon img {
+                    width: 125px;
+                }
+                .channels-icons .icon {
+                    width: 33.33%;
+                }
+                .channels-icons {
+                    width: 100%;
+                    text-align: center;
+                    padding: 10px;
+                    min-height: 140px;
+                    margin-bottom: 15px;
+                }
+                
+                .channels-icons .style-icon {
+                    text-decoration: none;
+                    color: rgb(50, 63, 79);
+                    font-family: Lato;
+                    font-size: 20px;
+                }
+                
+                .channels-icons .course-card-row {
+                    min-height: 180px;
+                }
+                
+                .active-tab{
+                    background: #F7F7F7;
+                }
+                
+                
+                .slds-button {
+                    position: relative;
+                    display: inline-block;
+                    padding: 0;
+                    background: transparent;
+                    background-clip: padding-box;
+                    border: none;
+                    border-radius: 0.25rem;
+                    color: #0070d2;
+                    font-size: inherit;
+                    line-height: 2.125rem;
+                    text-decoration: none;
+                    -webkit-appearance: none;
+                    white-space: normal;
+                    -webkit-user-select: none;
+                    -moz-user-select: none;
+                    -ms-user-select: none;
+                    user-select: none;
+                    -webkit-transition: color 0.05s linear,background-color 0.05s linear;
+                    transition: color 0.05s linear,background-color 0.05s linear;
+                    cursor: pointer;
+                }
+                
+                .slds-button--brand {
+                    padding-left: 1rem;
+                    padding-right: 1rem;
+                    text-align: center;
+                    vertical-align: middle;
+                    background-color: #26aadc;
+                    color: #fff;
+                    font-size: 15px;
+                    font-family: lato;
+                    padding: 0 2.5rem;
+                    height: 36px;
+                }
+                
+                .channels-icons .template2-course-card {
+                    min-height: initial;
+                    border: 0;
+                }
+                
+                .course-card-row div.icon:nth-child(2) .template2-course-card {
+                    margin: 0px auto;
+                }
+                
+                .course-card-row div.icon:nth-child(3) .template2-course-card {
+                    float: right;
+                }
+            </style>
+            <script>
+                 function wrapCourses( courses ){
+                    //alert( courses.length );
+                    for(var i = 0; i < divs.length; i+=3) {
+                        divs.slice(i, i+3).wrapAll("<div class='row course-card-row'></div>");
+                    }
+                }
+                
+           </script>
+        </head>
+        <body>
+            
+            <div class="wrapper">
+                <apex:form id="frm">
+                    
+                    <apex:pageMessages ></apex:pageMessages>
+                    <apex:actionStatus id="fetching">
+                        <apex:facet name="start">
+                             <apex:outputPanel id="tstpopup">
+                                    <apex:outputPanel styleClass="popupBackground" layout="block"/>
+                                    <apex:outputPanel styleClass="custPopup" layout="block">
+                                        <img src="/img/loading24.gif" style="vertical-align:middle; horizontal-align:middle"/> 
+                                        <span>Please wait...</span>  
+                                    </apex:outputPanel>
+                              </apex:outputPanel> 
+                        </apex:facet>
+                    </apex:actionStatus>
+                    <apex:actionFunction name="EnrolledUser" reRender="frm" status="fetching" action="{!EnrolledUser}">
+                        <apex:param assignTo="{!courseId}" name="ag1" value=""/>
+                    </apex:actionFunction>
+                    <apex:actionFunction name="viewStyleChange" reRender="frm" status="fetching">
+                        <apex:param name="param1" assignTo="{!currentView}" value="" />
+                        <apex:param name="param2" assignTo="{!activeTab}" value="browse" />
+                    </apex:actionFunction>
+                    <apex:outputPanel layout="none" rendered="{!isEdcastAuthorized}">
+                        
+                        <ul class="nav nav-tabs">
+                            <apex:outputPanel layout="none" rendered="{!isPaidVersionFlag}">
+                                <li class="{!IF(activeTab =='current', 'active' , '')}"><a href="" tab="currentCourses">My Current Courses</a></li>
+                                <li class="{!IF(activeTab =='upcoming', 'active' , '')}"><a href="" tab="futureCourses">My Upcoming Courses</a></li>
+                            </apex:outputPanel>
+                            
+                            <li class="{!IF(activeTab =='browse' , 'active' , '')}"><a href="" tab="browseCourses">Browse Available Courses</a></li>
+                           <!--<apex:outputPanel layout="none" rendered="{!isPaidVersionFlag}">
+                                <li><a href="" tab="completedCourses">My Completed Courses</a></li>
+                            </apex:outputPanel>-->
+                            
+                        </ul>
+                        <apex:outputPanel layout="none" rendered="{!isPaidVersionFlag}">                        
+                            <!-- ################################### -->
+                            <!-- CURRENT Courses Section Starts here -->
+                            <div id="currentCourses" class="tab-body {!IF(activeTab =='current', 'active-tab' , '')}">
+                                <div id="wrapper"> 
+                                    <div class="row search-container">
+                                        <div class="row search-subsection" id="bottom-container">
+                                            <div class="medium-12 columns search-results-section">
+
+                                                <apex:outputPanel layout="none" rendered="{!OR( erolledOfferings.currentCourses.size == 0, isNULL(erolledOfferings.currentCourses) )}">
+                                                    <div class="no-course">You are not yet enrolled in any courses. Please browse available courses and click to learn more and enroll.</div>
+                                                </apex:outputPanel>
+                                                
+                                                <div class="row search-navigation-row">
+                                                    <div class="small-8 columns">
+                                                        <h4 class="current-courses-count"></h4>
+                                                    </div>
+                                                </div>
+
+                                                <apex:outputPanel styleClass="" layout="none" rendered="{! erolledOfferings.currentCourses.size > 0 }">
+                                                    <apex:repeat value="{!erolledOfferings.currentCourses}" var="course">
+                                                        <div class="small-12 medium-3 large-4 columns course-card-wrapper current-course-card">
+                                                            <div class="template2-wrapper">
+                                                                <div class="template2-course-card">
+                                                                    <div class="row inline-video-thumbnail">
+                                                                        <a target="_blank" class="card-link" href="{!course.infoUrl}">
+                                                                            <div class="img" style="background-image: url('{!course.logoUrl}')"></div>
+                                                                            <apex:outputPanel layout="none" rendered="{!!isNull(course.introLink)}">
+                                                                                <span class="play video-play" data-link="{!course.introLink}"></span>
+                                                                            </apex:outputPanel>
+                                                                        </a>
+                                                                    </div>
+                                                                    <div class="course-info-container">
+                                                                        <div class="course-code">
+                                                                            <a target="_blank" class="card-link" href="{!course.infoUrl}">
+                                                                                <h5>{!course.name}</h5>
+                                                                            </a>
+                                                                            <div class="instructor-avatars">
+                                                                                <apex:outputPanel rendered="{!AND(!ISNULL(course.instructors), course.instructors.size > 0)}" layout="none">
+                                                                                    <a target="_blank" class="card-link" href="{!course.infoUrl}">
+                                                                                        <img src="{!course.instructors[0].photoUrl}"/>
+                                                                                    </a>
+                                                                                </apex:outputPanel>
+                                                                            </div>
+                                                                            <p class="category1"></p>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="row template2-card-buttons text-center">
+                                                                        <div class="small-12 columns">
+                                                                            <a class="card-button enroll small-12 columns mixpanel-link" target="_blank" style="width: 94%" onclick="this.style.color='#d3d3d3'" href="{!course.infoUrl}">Details</a>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </apex:repeat>
+
+                                                    <script>
+
+                                                        var divs = $("div.current-course-card");
+                                                        $(".current-courses-count").html("");
+                                                        if( divs.length > 0 ){
+                                                            $(".current-courses-count").text("All Courses ("+divs.length+" "+ ( divs.length > 1 ? "matches" : "match") +")")
+                                                        }
+                                                        wrapCourses( divs );
+
+                                                        
+                                                    </script>
+                                                </apex:outputPanel>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- CURRENT Courses Section ends here -->
+                            <!-- ################################### -->
+                            
+
+                            <!-- ##################################### -->
+                            <!-- Future Courses Section Starts here -->
+                            <div id="futureCourses" class="tab-body {!IF(activeTab =='upcoming', 'active-tab' , '')}">
+                                <div id="wrapper"> 
+                                    <div class="row search-container">
+                                        <div class="row search-subsection" id="bottom-container">
+                                            <div class="medium-12 columns search-results-section">
+                                                <apex:outputPanel layout="block" rendered="{!OR( erolledOfferings.futureCourses.size == 0, isNULL(erolledOfferings.futureCourses) )}">
+                                                    <div class="no-course">This tab displays courses you are enrolled in but have not yet started. You do not have any upcoming courses.</div>
+                                                </apex:outputPanel>
+                                                
+                                                <div class="row search-navigation-row">
+                                                    <div class="small-8 columns">
+                                                        <h4 class="future-courses-count"></h4>
+                                                    </div>
+                                                </div>
+                
+                                                <apex:outputPanel styleClass="" layout="none" rendered="{! erolledOfferings.futureCourses.size > 0 }">
+                                                    <apex:repeat value="{!erolledOfferings.futureCourses}" var="course">
+                                                        <div class="small-12 medium-3 large-4 columns course-card-wrapper future-course-card">
+                                                            <div class="template2-wrapper">
+                                                                <div class="template2-course-card">
+                                                                    <div class="row inline-video-thumbnail">
+                                                                        <a target="_blank" class="card-link" href="{!course.infoUrl}">
+                                                                            <div class="img" style="background-image: url('{!course.logoUrl}')"></div>
+                                                                            <apex:outputPanel layout="none" rendered="{!!isNull(course.introLink)}">
+                                                                                <span class="play video-play" data-link="{!course.introLink}"></span>
+                                                                            </apex:outputPanel>
+                                                                        </a>
+                                                                    </div>
+                                                                    <div class="course-info-container">
+                                                                        <div class="course-code">
+                                                                            <a target="_blank" class="card-link" href="{!course.infoUrl}">
+                                                                                <h5>{!course.name}</h5>
+                                                                            </a>
+                                                                            <div class="instructor-avatars">
+                                                                                <apex:outputPanel rendered="{!AND(!ISNULL(course.instructors), course.instructors.size > 0)}" layout="none">
+                                                                                    <a target="_blank" class="card-link" href="{!course.infoUrl}">
+                                                                                        <img src="{!course.instructors[0].photoUrl}"/>
+                                                                                    </a>
+                                                                                </apex:outputPanel>
+                                                                            </div>
+                                                                            <p class="category1"></p>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="row template2-card-buttons text-center">
+                                                                        <div class="small-12 columns">
+                                                                            <a class="card-button enroll small-12 columns mixpanel-link" target="_blank" style="width: 94%" onclick="this.style.color='#d3d3d3'" href="{!course.infoUrl}">Details</a>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </apex:repeat>
+                
+                                                    <script>
+                                                        var divs = $("div.future-course-card");
+                                                        $(".future-courses-count").html("");
+                                                        if( divs.length > 0 ){
+                                                            $(".future-courses-count").text("All Courses ("+divs.length+" "+ ( divs.length > 1 ? "matches" : "match") +")")
+                                                        }
+                                                        wrapCourses( divs );
+                                                    </script>
+                                                </apex:outputPanel>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>                              
+                            </div>
+                            <!-- Future Courses Section ends here -->
+                            <!-- ##################################### -->
+                        </apex:outputPanel>
+                        
+
+                        <!-- ##################################### -->
+                        <!-- Browse Courses Section Starts here -->
+                        <div id="browseCourses" class="tab-body {!IF(activeTab =='browse', 'active-tab' , '')}">
+                            <apex:outputPanel layout="none" rendered="{!OR( offeringCourses.size == 0, isNULL(offeringCourses) )}">
+                                <div class="no-course">There are no courses available for you to browse at this time.</div>
+                            </apex:outputPanel>
+                        
+                            <apex:outputPanel styleClass="" id="offering-panel" rendered="{!offeringCourses.size > 0 }">
+                                <div class="offering-courses-panel  wrapper">
+                                    <div id="wrapper"> 
+                                        <input type="text" id="hidden-box" style="width:0px;height:0px;border: none;"/>
+                                        <div class="row search-container">
+
+                                            <div class="columns medium-2 mr6px left-column search-subsection" data-equalizer-watch="parent" style="">
+                                                <div class="small-12 columns">
+                                                    <h3>Course Catalog</h3>
+                                                </div>
+                                                <div class="columns filter-column">
+                                                    <div class="filter-accordion">
+                                                        <dl class="accordion" data-accordion="">
+                                                            <dd class="accordion-navigation">
+                                                                <a class="select-cat-acc-link" href="#filter-accordion-content"> Select category</a>
+                                                                <div class="content" id="filter-accordion-content">
+                                                                    <div class="price-section">                                                             
+                                                                        <ul class="sb-list-open-self">                                                                      
+                                                                            <li class="pprice__open-for-enrollment" title="Open for enrollment" style = "background-size: 18px !important;padding-left: 22px;background: url({!URLFOR($Resource.Edcast_Resource,'images/open_with_enrollment.png')}) no-repeat 1px;">
+                                                                                <apex:commandLink onclick="setCategory('pprice__Open for enrollment'); return false;" value="Open for enrollment"/>
+                                                                                <span class = "right"></span>
+                                                                            </li>                                                               
+                                                                            <li class="pprice__self-paced" title="self-paced" style = "background-size: 18px !important;padding-left: 22px;background: url({!URLFOR($Resource.Edcast_Resource,'images/self_paced.png')}) no-repeat 1px;">
+                                                                                <apex:commandLink onclick="setCategory('pprice__Self-paced'); return false;" value="Self-paced"/>                                            
+                                                                                <span class = "right"></span>
+                                                                            </li>                                                                    
+                                                                        </ul>
+                                                                    </div>
+                                                                    <div class = "mb20px">
+                                                                        <h4 class=" featureStyle"> 
+                                                                            <ul >                                                                                                               
+                                                                                <li class="pprice__featured-courses" title="Featured Courses" style="font-size: 1.4375rem;">
+                                                                                    <apex:commandLink styleClass="self-paced" onclick="setCategory('pprice__Featured Courses'); return false;" value="Featured Courses" style="background: url({!URLFOR($Resource.edcast__EdCast_Resource,'images/self_paced.png')}) no-repeat 1px;background-size: 16px;"/>                                            
+                                                                                    <span class = "right"></span>
+                                                                                </li>                                                                    
+                                                                            </ul>                                                                    
+                                                                        </h4> 
+                                                                    </div>
+                                                                    <div class="price-section">
+                                                                        <h4>Price</h4>
+                                                                        
+                                                                         <ul class="sb-list-price">  
+                                                                            <li class="sb_list_item_price pprice__free" title="Free">
+                                                                                <apex:commandLink onclick="setCategory('pprice__Free'); return false;" value="Free"/>
+                                                                                <span class = "right"></span>
+                                                                            </li>                                      
+                                                                            <li class="sb_list_item_price pprice__paid" title="Paid">
+                                                                                <apex:commandLink onclick="setCategory('pprice__Paid'); return false;" value="Paid"/>                                            
+                                                                                <span class = "right"></span>
+                                                                            </li>
+                                                                            
+                                                                        </ul>
+                                                                    </div>
+                                                                    <div class="category-section">
+                                                                        <h4>Category</h4>
+                                                                        <ul class="sb-list-categories category-list-filter">
+                                                                            <apex:repeat value="{!mapCategories}" var="item">
+                                                                                <li class="sb_list_item {!mapCourseClassName[item]}" title="{!item}">
+                                                                                    <apex:commandLink onclick="setCategory('{!item}'); return false;" value="{!item}"/>
+                                                                                    <span class = "right course-counting">{!mapCategories[item]}</span>   
+                                                                                </li>
+                                                                            </apex:repeat>
+                                                                        </ul>  
+                                                                    </div>
+                                                                </div>
+                                                            </dd>
+                                                        </dl>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="columns right-column">
+                                                <div class="row search-page-search-row search-subsection">
+                                                    <div class="medium-6 columns">
+                                                        <form action="/search" accept-charset="UTF-8" method="get">
+                                                            <input name="utf8" type="hidden" value="✓"/>
+                                                            <div class="row collapse search-form-wrapper">
+                                                                <div class="small-12 columns">
+                                                                    <div class="small-11 columns search-box">
+                                                                        <input class="search search-for searchTags" type="text" placeholder="search catalog"/>
+                                                                        <input class="search-submit" type="submit" />
+                                                                    </div>
+                                                                   
+                                                                </div>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                    <div class="medium-2 columns text-right view-wrapper">View: &nbsp;
+                                                        <a class="list {!IF(currentView=='list','active','inactive')}" onclick="viewStyleChange('list');return false;">
+                                                            <img src="{!URLFOR($Resource.Edcast_Resource,'images/list-view.png')}" alt="List view"/>
+                                                        </a>
+                                                        <a class="grid {!IF(currentView=='grid','active','inactive')}" onclick="viewStyleChange('grid');return false;">
+                                                            <img src="{!URLFOR($Resource.Edcast_Resource,'images/grid-block-view.png')}" alt="Grid block view"/>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                                <div class="row search-subsection" id="bottom-container">
+                                                    <div class="medium-12 columns search-results-section channels-icons">
+                                                        <div class="row" style="text-align: left;">
+                                                            <div class="small-12 columns">
+                                                                <h4>Channels</h4>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row course-card-row" style="border-bottom: 5px solid #F7F7F7;">
+                                                            <div class="small-12 medium-3 large-4 columns icon">
+                                                                <div class="template2-wrapper">
+                                                                    <div class="template2-course-card">
+                                                                        <apex:outputLink target="_Blank" title="Sales Best Practices" value="{!linkUrl}/channel/sales-best-practices">
+                                                                            <apex:image value="{!URLFOR($Resource.edcast__EdCast_Resource,'images/salesbestpractices_circle.jpg.png')}"/>
+                                                                            <br/><br/>
+                                                                            <input type="button" class="slds-button slds-button--brand" value="Sales Best Practices"/>
+                                                                        </apex:outputLink>
+                                                                    </div>
+                                                                </div>    
+                                                            </div>
+                                                            <div class="small-12 medium-3 large-4 columns icon">
+                                                                <div class="template2-wrapper">
+                                                                    <div class="template2-course-card">
+                                                                        <apex:outputLink target="_Blank" title="Digital Marketing" value="{!linkUrl}/channel/digital-marketing">
+                                                                            <apex:image value="{!URLFOR($Resource.edcast__EdCast_Resource,'images/DigitalMarketing.png')}"/>
+                                                                            <br/><br/>
+                                                                            <input type="button" class="slds-button slds-button--brand" value="Digital Marketing"/>
+                                                                        </apex:outputLink>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="small-12 medium-3 large-4 columns icon">
+                                                                <div class="template2-wrapper">
+                                                                    <div class="template2-course-card">
+                                                                        <apex:outputLink target="_Blank" title="Sales Management" value="{!linkUrl}/channel/sales-university">
+                                                                            <apex:image value="{!URLFOR($Resource.edcast__EdCast_Resource,'images/salesmanagement_circle.png')}"/>
+                                                                            <br/><br/>
+                                                                            <input type="button" class="slds-button slds-button--brand" value="Sales University"/>
+                                                                        </apex:outputLink>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="medium-12 columns search-results-section">
+                                                        
+                                                        <div class="row search-navigation-row">
+                                                            <div class="small-8 columns">
+                                                                <h4 class="browse-courses-count"></h4>
+                                                            </div>
+                                                            <div class="small-4 columns">
+                                                                <div class="paginate right">
+                                                                    <span class="page-numbers">
+                                                                        <b class="fromToPage"></b> of <b class="totalPage"></b>
+                                                                    </span>
+                                                                    <a rel="previous" onclick="prePage();return false;" class="arrow-link arrow-pre" href="">&lt;</a>
+                                                                    <a rel="next" onclick="nextPage();return false;" class="arrow-link arrow-next" href="">&gt;</a>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        
+                                                        
+                                                        <div class="medium-12 columns search-results-section offering-search-results-section">
+                                                            <div class="empty-results">
+                                                                <p></p>
+                                                            </div>
+                                                        </div>
+                                                        <apex:outputPanel styleClass="" layout="none" rendered="{! OR(ISNULL(offeringCourses), offeringCourses.size == 0) }">
+                                                            <div class="medium-12 columns search-results-section">
+                                                                <div class="empty-results">
+                                                                    <p>No course available.</p>
+                                                                </div>
+                                                            </div>
+                                                        </apex:outputPanel>
+                                                        <apex:outputPanel styleClass="" layout="none" rendered="{! offeringCourses.size > 0 }">
+                                                            <div class="learn-courses-list">
+                                                                <div class="search-msg"></div>
+                                                                <apex:repeat value="{!offeringCourses}" var="course">
+                                                                   
+                                                                   <apex:outputPanel layout="none" rendered="{!currentView=='grid'}">
+                                                                   
+                                                                   <div class="category pagination offering-course-card-list small-12 medium-3 large-4 columns course-card-wrapper offering-course-card" isOpenEnrollment="{!course.isOpenEnrollment}" isSelfPaced="{!course.isSelfPaced}" isPaid="{!course.feeRequired}" isFeatured="{!course.featured}">
+                                                                        <div class="categories-string" style="display:none;">{!mapCourseWithCategories[course.id]}</div>
+                                                                        
+                                                                        <div class="template2-wrapper">
+                                                                            <div class="template2-course-card">
+                                                                                <div class="row inline-video-thumbnail">
+                                                                                    <a target="_blank" class="card-link" href="{!course.infoUrl}">
+                                                                                        <div class="img" style="background-image: url('{!course.logoUrl}')"></div>
+                                                                                        <apex:outputPanel layout="none" rendered="{!!isNull(course.introLink)}">
+                                                                                            <span class="play video-play" data-link="{!course.introLink}"></span>
+                                                                                        </apex:outputPanel>
+                                                                                    </a>
+                                                                                </div>
+                                                                                <div class="course-info-container">
+                                                                                    <div class="course-code">
+                                                                                        <a target="_blank" class="card-link course-name" href="{!course.infoUrl}">
+                                                                                            <h5>{!course.name}</h5>
+                                                                                        </a>
+                                                                                        <div class="instructor-avatars">
+                                                                                            <apex:outputPanel rendered="{!AND(!ISNULL(course.instructors), course.instructors.size > 0 )}" layout="none">
+                                                                                            <a target="_blank" class="card-link" href="{!course.infoUrl}">
+                                                                                                <img src="{!course.instructors[0].photoUrl}"/>
+                                                                                            </a>
+                                                                                        </apex:outputPanel>
+                                                                                        </div>
+                                                                                        <p class="category1"></p>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div class="row template2-card-buttons text-center">
+                                                                                    <div class="small-12 columns">
+                                                                                       <apex:outputLink value="{!course.infoUrl}" style="width: 94%"  styleClass="card-button enroll small-6 columns mixpanel-link" onclick="this.style.color='#d3d3d3'" target="_blank">Details</apex:outputLink>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>  
+                                                                    </div>
+                                                                        
+                                                                        
+                                                                   </apex:outputPanel>   
+                                                                    <apex:outputPanel layout="none" rendered="{!currentView=='list'}">
+                                                                                                                         
+                                                                    <div class="category pagination offering-course-card-list row mb30px course-list-row"  isOpenEnrollment="{!course.isOpenEnrollment}" isSelfPaced="{!course.isSelfPaced}" isPaid="{!course.feeRequired}" isFeatured="{!course.featured}">
+                                                                        <div class="categories-string" style="display:none;">{!mapCourseWithCategories[course.id]}</div>
+                                                                        <div class="small-12 medium-12 large-12 columns">
+                                                                            <div class="small-12 past-course-container columns list-template inline-block" >
+                                                                                <div class="left-course-card left inline-video-thumbnail">
+                                                                                    <div class="img" style="background-image: url({!course.logoUrl})"></div>
+                                                                                </div>
+                                                                                <div class="right-course-info-card right">
+                                                                                    <div class="row">
+                                                                                        <div class="small-8 columns">
+                                                                                            <a target="_blank" class="card-link course-name" href="{!course.infoUrl}">
+                                                                                                <h5>{!course.name}</h5>
+                                                                                            </a>
+                                                                                            <div class="instructor-avatars row">
+                                                                                                
+                                                                                                <apex:outputPanel layout="none" rendered="{!course.instructors.size >0}">                                                                    
+                                                                                                    <div class="instructor-row small-6 columns"><img src="{!course.instructors[0].photoUrl}" alt="Default user"/>{!course.instructors[0].name}</div>
+                                                                                                </apex:outputPanel>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                        <div class="small-4 columns category-enroll-container text-right">
+                                                                                            <p class="category1">
+                                                                                                {!mapCourseWithCategories2[course.id]}
+                                                                                            </p>
+                                                                                            <a target="_blank" class="card-button" style="width:110px;" href="{!course.infoUrl}">
+                                                                                                <apex:outputText value="Details" />
+                                                                                            </a>
+                                                                                        </div>
+                                                                                        
+                                                                                    </div>
+                                                                                    <div class="row info-row">
+                                                                                        <div class="small-10 columns"></div>
+                                                                                        <div class="small-2 columns">
+                                                                                            <p class="fee-amount">
+                                                                                                <apex:outputPanel layout="none" rendered="{!course.fee.amount != ''}">
+                                                                                                    ${!course.fee.amount}
+                                                                                                </apex:outputPanel>
+                                                                                                <apex:outputPanel layout="none" rendered="{!course.fee.amount == ''}">
+                                                                                                    Free
+                                                                                                </apex:outputPanel>
+                                                                                            </p>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    
+                                                                   </apex:outputPanel>
+                                                                </apex:repeat>
+                                                            </div>                                                   
+                                                            
+                                                        </apex:outputPanel>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </apex:outputPanel>
+                        </div>
+                        <!-- Browse Courses Section ends here -->
+                        <!-- ##################################### -->
+                        
+                        <!-- ##################################### -->
+                        <!-- Completed Courses Section Starts here -->
+                        <!--<apex:outputPanel layout="none" rendered="{!isPaidVersionFlag}">
+                            <div id="completedCourses" class="tab-body">
+                                <apex:outputPanel layout="none" rendered="{!OR( erolledOfferings.pastCourses.size == 0, isNULL(erolledOfferings.pastCourses) )  }">
+                                    <div class="no-course">You have not yet completed any courses.</div>
+                                </apex:outputPanel>
+                                
+                                <div class="row search-navigation-row">
+                                    <div class="small-8 columns">
+                                        <h4 class="past-courses-count"></h4>
+                                    </div>
+                                </div>
+
+                                <apex:outputPanel styleClass="" layout="none" rendered="{! erolledOfferings.pastCourses.size > 0 }">
+                                    <apex:repeat value="{!erolledOfferings.pastCourses}" var="course">
+                                        <div class="small-12 medium-3 large-4 columns course-card-wrapper past-course-card">
+                                            <div class="template2-wrapper">
+                                                <div class="template2-course-card">
+                                                    <div class="row inline-video-thumbnail">
+                                                        <a target="_blank" class="card-link" href="{!course.infoUrl}">
+                                                            <div class="img" style="background-image: url('{!course.logoUrl}')"></div>
+                                                            <apex:outputPanel layout="none" rendered="{!!isNull(course.introLink)}">
+                                                                <span class="play video-play" data-link="{!course.introLink}"></span>
+                                                            </apex:outputPanel>
+                                                        </a>
+                                                    </div>
+                                                    <div class="course-info-container">
+                                                        <div class="course-code">
+                                                            <a target="_blank" class="card-link" href="{!course.infoUrl}">
+                                                                <h5>{!course.name}</h5>
+                                                            </a>
+                                                            <div class="instructor-avatars">
+                                                                <apex:outputPanel rendered="{!AND(!ISNULL(course.instructors), course.instructors.size > 0)}" layout="none">
+                                                                    <a target="_blank" class="card-link" href="{!course.infoUrl}">
+                                                                        <img src="{!course.instructors[0].photoUrl}"/>
+                                                                    </a>
+                                                                </apex:outputPanel>
+                                                            </div>
+                                                            <p class="category1"></p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row template2-card-buttons text-center">
+                                                        <div class="small-12 columns">
+                                                            <a class="card-button enroll small-12 columns mixpanel-link" target="_blank" style="width: 94%" onclick="this.style.color='#d3d3d3'" href="{!course.infoUrl}">Details</a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </apex:repeat>
+
+                                    <script>
+                                        var divs = $("div.past-course-card");
+                                        $(".past-courses-count").html("");
+                                        if( divs.length > 0 ){
+                                            $(".past-courses-count").text("All Courses ("+divs.length+" "+ ( divs.length > 1 ? "matches" : "match") +")")
+                                        }
+                                        wrapCourses( divs );
+                                    </script>
+                                </apex:outputPanel>
+                            </div>
+                        </apex:outputPanel>-->
+                        <!-- Completed Courses Section ends here -->
+                        <!-- ##################################### -->
+
+                    </apex:outputPanel>
+                    
+                    <div class="reveal-modal-bg" style="display: none;"></div>
+                    <div class="reveal-modal large open" data-reveal="" id="introVideo" onkeydown="esc(this,event)" role="dialog" tabindex="0" style=" display: none; top: 381px; opacity: 1;">
+                        <div class="flex-video">
+                            <iframe allowfullscreen="" frameborder="0" id="intro-iframe" src="" style="min-height: 268px; width: 100%;" data-src=""></iframe>
+                        </div>
+                    </div>
+
+                    <script src="{!URLFOR($Resource.Edcast_Resource,'js/modernizr.js')}"/>
+                    <apex:outputPanel id="script-panel">
+                        <c:edcastJS />
+                        <script>
+                            
+                            $(document).ready( function(){
+                                var searchTags =$.parseJSON('{!JSENCODE(browseCourseSearch)}');                   
+                                $( ".searchTags" ).autocomplete({                    
+                                    source: searchTags,
+                                });
+                            });
+                         
+                        </script>
+                    </apex:outputPanel>
+                </apex:form>
+            </div>
+        </body>
+    </html>
+</apex:page>
