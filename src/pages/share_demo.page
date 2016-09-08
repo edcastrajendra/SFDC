@@ -1,0 +1,374 @@
+<apex:page standardStylesheets="false" sidebar="false" controller="VideoPitchShareUserController" action="{!getVideoInfo}"> 
+    <html xmlns="https://www.w3.org/2000/svg" xmlns:xlink="https://www.w3.org/1999/xlink">
+        <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+            <link rel="stylesheet" href="{!URLFOR($Resource.Assets_SU,'bootstrap/css/bootstrap.css')}"/>
+            <link rel="stylesheet" href="{!URLFOR($Resource.csslib,'fa/css/font-awesome.min.css')}"/>
+            <link rel="stylesheet" href="{!URLFOR($Resource.Assets_SU,'Styles/main-css.css')}"/>
+            <apex:includeScript value="{!URLFOR($Resource.Assets_SU,'js/jquery.min.js')}" />
+            <apex:includeScript value="{!URLFOR($Resource.Assets_SU,'js/jquery-ui.min.js')}" /> 
+             <title>Perfect The Pitch</title>
+            <style>
+           .working{background:url('/img/loading.gif') no-repeat right center;}
+           </style>
+            <script>
+            $(document).ready(function(){
+            var queryTerm;
+            var jsonResult;
+             $(".cls-search-input-sfdc").autocomplete({
+              source : function (request, response) { 
+              queryTerm = request.term;
+                    VideoPitchShareUserController.getAutoComplete(queryTerm, function(result, event){
+                        if(event.type == 'exception') {
+                              console.log('exception>>>>>>>>>>>>'+event.message);
+                        } else {
+                     console.log(result.message.speech);
+                    var objectArray = result.message.speech;
+                     var htmlResult='';       
+                   for(var i=0;i<objectArray.length;i++){
+                       htmlResult += '<div class="col-sm-4 col-xs-4 col-lg-3" style="display:inline-block;padding: 15px;">'
+                     +' <div class="col-sm-12 col-xs-12" style="padding:10px 10px 0;display:inline-block;box-shadow: -2px 2px 5px #d9d9d9;background-color: #fafafa;border: 1px solid #e0e0e0;">'
+                         +'<div class="col-sm-12 col-xs-12" style="padding: 0 0 5px;">'
+                                +' <span style="font-size: 13px;font-weight:bold;white-space: nowrap;text-overflow: ellipsis;overflow: hidden;display: block;" class="ng-binding">'+objectArray[i].title+'</span>'
+                        +' </div>'
+                        +' <div class="col-sm-12 col-xs-12" style="padding:0;">'
+                              +'<img class="col-sm-12 col-xs-12" src="'+objectArray[i].thumb_url+'" style="padding:0;height:150px;">'
+                             +'<img class="img-responsive" onclick="searchVideoInfo('+objectArray[i].video_id+','+objectArray[i].speech_id+')" style="cursor: pointer;display:block;position:absolute;left: 50%;top: 50%;transform: translate(-50%,-50%);width: 20%;" src="{!URLFOR($Resource.Assets_SU,"Assets/video_play_btn.png")}"/>'
+                          +'</div>'
+                          +'<div style="float:left;width:100%;padding:5px 0;">'
+                              +'<div style="padding: 0px;float:left;">'
+                                 +'<div style="display:inline-block;font-size: 11px;">'
+                                  +'<span class="star" style="color:#0f7be4;"></span>'
+                                  +'<span class="star" style="color:#0f7be4;"></span>'
+                                  +'<span class="star" style="color:#0f7be4;"></span>'
+                                 +' <span class="star" style="color:#0f7be4;"></span>'
+                                  +'<span class="star" style="color:#0f7be4;"></span>'
+                                 +'</div>'
+                              +'</div>'
+                               +'<div style="float:right;padding: 2px;">'
+                                 +' <span style="color:#888888;text-align:right;font-size: 12px;" class="ng-binding"> '+objectArray[i].comments 
+                                     +' <span aria-hidden="true" class="fa fa-commenting-o" style="font-size: 14px;"></span>'
+                                  +'</span>'
+                                  +'<span style="color:#888888;text-align:right;font-size: 12px;">1000 '
+                                     +' <span aria-hidden="true" class="fa fa-eye" style="font-size: 14px;"></span>'
+                                  +'</span>'
+                              +'</div>'
+                          +'</div>'
+                      +'</div>'
+                  +'</div>';
+                     } 
+                      $('.cls-search-input-sfdc').removeClass('working'); 
+                      $('.cls-share-div').hide();
+                       $('.cls-video-list-div').show();     
+                      $('#result').html(htmlResult);
+                       }
+                    });
+              },
+             focus: function( event, ui ) {
+                return false;
+                },
+             select: function( event, ui ) {
+                    return false;
+                },
+              search  : function(){$(this).addClass('working');},
+              open    : function(){$(this).removeClass('working');}
+             });
+        });
+            $(document).ready(function(){
+                $(".select-all-group").click(function() {
+                    if($(".cls-white-group").hasClass('cls-select-blue-image')){
+                        $(".cls-white-group").attr("src", "{!URLFOR($Resource.vrp,'Assets/circle_blue.png')}");
+                        $(".cls-white-group").removeClass('cls-select-blue-image');
+                        $(".cls-select-groups").css("display","block");
+                    }else{
+                        $(".cls-white-group").attr("src", "{!URLFOR($Resource.vrp,'Assets/circle_white.png')}");
+                        $(".cls-white-group").addClass('cls-select-blue-image');  
+                        $(".cls-select-groups").css("display","none");
+                    }
+                });
+               $(".select-all-mentor").click(function() {
+                    if($(".cls-white-mentor").hasClass('cls-select-blue-image')){
+                        $(".cls-white-mentor").attr("src", "{!URLFOR($Resource.vrp,'Assets/circle_blue.png')}");
+                        $(".cls-white-mentor").removeClass('cls-select-blue-image');
+                        $(".cls-select-mentors").css("display","block");
+                    }else{
+                        $(".cls-white-mentor").attr("src", "{!URLFOR($Resource.vrp,'Assets/circle_white.png')}");
+                        $(".cls-white-mentor").addClass('cls-select-blue-image');  
+                        $(".cls-select-mentors").css("display","none");
+                    }
+                });
+             $(".cls-select-image").click(function(){
+                 
+             });   
+                $("#text-search").keyup(function(){
+                    if(this.value.length > 0){
+                    }else{
+                        $(".cls-video-list-div").hide();
+                        $(".cls-share-div").show();
+                    }
+                });
+                $("#search-demo").click(function(){
+                    $("#change-search-option").html('Search Demo'); 
+                    $(".cls-label-search-pop-div").hide(); 
+                }); 
+                $("#search-pitch").click(function(){
+                    $("#change-search-option").html('Search Pitch'); 
+                    $(".cls-label-search-pop-div").hide();   
+                });   
+            });   
+            
+            function searchOption(){
+                $('.cls-label-search-pop-div').toggle();
+            }    
+            function getMentors(){
+                $('.mentors').show();
+                $('.groups').hide();
+                $("#mentors_button").attr("src", "{!URLFOR($Resource.vrp,'Assets/circle_blue.png')}");
+                $("#groups_button").attr("src", "{!URLFOR($Resource.vrp,'Assets/circle_white.png')}");
+            }
+            function getGroups(){
+                $('.mentors').hide();
+                $('.groups').show();
+                $("#groups_button").attr("src", "{!URLFOR($Resource.vrp,'Assets/circle_blue.png')}");
+                $("#mentors_button").attr("src", "{!URLFOR($Resource.vrp,'Assets/circle_white.png')}");
+            } 
+
+            function shareMain(){
+                if(!$(".cls-white-group").hasClass('cls-select-blue-image')){
+                   var groupId= [];   
+                  $(".cls-group-id").each(function() {
+                   groupId.push($(this).val());;
+                   });
+                 var group = groupId[0];
+                 for (i = 1; i < groupId.length; i++) { 
+                 group += ','+groupId[i];
+                 } 
+                getShareVideoList(group);
+                } 
+                if(!$(".cls-white-mentor").hasClass('cls-select-blue-image')){
+                  var userId= [];   
+                  $(".cls-user-id").each(function() {
+                   userId.push($(this).val());;
+                   }); 
+                 var user = userId[0];
+                 for (i = 1; i < userId.length; i++) { 
+                 user += ','+userId[i];
+                 } 
+                getShareVideoList(user);
+                }
+            }
+            </script> 
+        </head>
+        <body>
+            <apex:form >
+                <div class="col-sm-12 col-xs-12" style="padding:0">
+                    <div class="header-section" id="header">
+                        <div class="cls-header-first-div">
+                            <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                                <div style="max-width:390px;margin: 0 auto;">
+                                    <label class="cls-label-search">
+                                        <div class="cls-search-label-div">
+                                            <img src="{!URLFOR($Resource.Assets_SU,'Assets/search.png')}" style="" />
+                                            <span style="font-weight: 100;" id="change-search-option">Search Pitch</span>
+                                            <span class="fa fa-chevron-down" onclick="searchOption();" style="padding-left: 5px;cursor:pointer"></span>
+                                        </div>
+                                        <input class="cls-search-input-sfdc" type="text" name="search" id="text-search" ng-model="keyWord.title"/>
+                                        <div class="cls-label-search-pop-div">
+                                            <div style="padding:10px 5px;border-bottom: 1px solid #ccc;cursor: pointer;">
+                                                <img src="{!URLFOR($Resource.vrp,'Assets/serchradio_icon.png')}" />
+                                                <span style="color: #888888;padding-left: 5px;font-weight: 100;" id="search-pitch">Search Pitch</span>
+                                            </div>
+                                            <div style="padding:10px 5px;    cursor: pointer;">
+                                                <img src="{!URLFOR($Resource.vrp,'Assets/serchradio_icon.png')}" />
+                                                <span style="color: #888888;padding-left: 5px;font-weight: 100;" id="search-demo">Search Demo</span>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="" style="position: absolute;right: 15px;top: 2px;cursor: pointer;">
+                                    <img src="{!URLFOR($Resource.vrp,'Assets/01.png')}" style="height: 25px;" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="header-second col-sm-12 col-xs-12">
+                            <div class="col-lg-9 col-md-9 col-sm-9 col-xs-9">
+                                <div class="site-map" style="display: inline-block;padding: 5px 20px 0px 0;float: left;">
+                                    <span style="padding: 5px 0;float: left;">Perfect The Pitch</span>
+                                </div>
+                                <div class="site-map" style="display: inline-block;padding: 5px 20px 0px 0;float: left;">
+                                    <span style="padding: 5px 0;float: left;border-bottom: 1px solid #0f7be4;color:#0f7be4;">Perfect The Demo</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-sm-12 col-xs-12 cls-share-div" style="display:block;padding:15px;/*display:none;*/">
+                        <div class="col-sm-12 col-xs-12" style="padding: 0 5px 5px;border-bottom: 1px solid #ccc;">
+                            
+                            <div  style="padding: 0px 0 15px;max-width: 400px;margin: 0 auto;">
+                                
+                                <img src="{!thumb_url}" style="width:100%;max-width:500px;max-height:250px" />
+                            </div>
+                            <p style="font-size: 18px;color:#212121;font-weight: bolder;">
+                                {!title}
+                            </p>
+                            
+                        </div>
+                        <div class="col-sm-12 col-xs-12" style="padding: 10px 3px 0;">
+                            <div>
+                                <div style="text-align: left;display: inline-block;">
+                                    <span style="font-size: 16px;font-weight: 100;margin-right: 10px;">
+                                        Share with :
+                                    </span>
+                                    <span onclick="getMentors();" style="font-size: 13px;font-weight: 100;margin-right: 10px;">
+                                        <img id="mentors_button" src="{!URLFOR($Resource.vrp,'Assets/circle_white.png')}" style=" width: 20px;vertical-align: top;" />
+                                        <span>Mentors</span>
+                                    </span>
+                                    <span onclick="getGroups();" style="font-size: 13px;font-weight: 100;">
+                                        <img id="groups_button" src="{!URLFOR($Resource.vrp,'Assets/circle_blue.png')}" style=" width: 20px;vertical-align: top;" />  
+                                        <span>Groups</span> 
+                                    </span>
+                                </div>
+                                <div style="text-align: right;color: #fff;display: inline-block;float: right;padding:3px 0;">
+                                    <span onclick="shareMain();" style="padding: 5px 15px;background-color: #0f7be4;cursor: pointer;font-size: 14px;font-weight: 100;margin-right: 3px;">
+                                        Share
+                                    </span>
+                                    <apex:commandLink action="{!cancel}" value="">
+                                        <span style="padding: 5px 15px;background-color: #0f7be4;cursor: pointer;font-size: 14px;font-weight: 100;color: #fff;">
+                                            Cancel
+                                        </span>
+                                    </apex:commandLink>  
+                                </div>
+                            </div>
+                            <div class="mentors" style="text-align: left;padding: 7px 0;display:none;">
+                                <span style="font-size: 14px;font-weight: 100;margin-right: 10px;vertical-align: bottom;">
+                                    Select Mentor
+                                </span>
+                                <span class="select-all-mentor" style="font-size: 13px;font-weight: 100;margin-right: 10px;float: right;">
+                                    <img class="cls-white-mentor cls-select-blue-image" src="{!URLFOR($Resource.vrp,'Assets/circle_white.png')}"  style="width: 20px;" />
+                                    <span style=" vertical-align: bottom;">Select All</span>
+                                </span>
+                            </div>
+                            <div class="col-sm-12 col-xs-12 mentors" style="padding: 5px 0;display:none;">
+                                <apex:repeat value="{!mentorsDto.message.mentors}" var="mentor">  
+                                    <div class="col-sm-2 col-md-1 col-lg-1 col-xs-2" style="padding: 5px 0;text-align: center;">
+                                        <div class="cls-select-all-mentor">  
+                                            <input type="hidden" class="cls-user-id" name="user_id" value="{!mentor.user_id}"/>    
+                                            <img class="cls-select-image" src="{!mentor.image_url}" style="width: 50px;height: 50px;border-radius: 50%;text-align: center;"/>
+                                            <img class="cls-select-mentors" src="{!URLFOR($Resource.vrp,'Assets/select_pad.png')}" style="width: 50px;height: 50px;border-radius: 50%;text-align: center;position: absolute;top: 6px;left: 38px;display:none;"/>
+                                        </div>     
+                                        <p  style="font-size: 13px;padding-top: 5px;">
+                                            {!mentor.first_name} {!mentor.last_name}
+                                        </p>
+                                    </div>
+                                </apex:repeat>
+                            </div>  
+                            <div class="groups" style="text-align: left;padding: 7px 0;">
+                                <span style="font-size: 14px;font-weight: 100;margin-right: 10px;vertical-align: bottom;">
+                                    Select Group
+                                </span>
+                                <span class="select-all-group" style="font-size: 13px;font-weight: 100;margin-right: 10px;float: right;">
+                                    <img class="cls-white-group cls-select-blue-image" src="{!URLFOR($Resource.vrp,'Assets/circle_white.png')}"  style="width: 20px;" />
+                                    <span style=" vertical-align: bottom;">Select All</span>
+                                </span>
+                            </div>
+                            <div class="col-sm-12 col-xs-12 groups" style="padding: 5px 0;">
+                                <apex:repeat value="{!groupsDto.message.groups}" var="group">
+                                    <apex:repeat value="{!group}" var="grp">
+                                        <input type="hidden" class="cls-group-id"  name="group_id" value="{!grp.group_id}"/> 
+                                        <div class="col-sm-2 col-md-1 col-lg-1 col-xs-2" style="padding: 5px 0;text-align: center;float:left">  
+                                            <apex:commandLink action="{!getGroup}" value="">
+                                                <apex:param id="group_id" name="group_id" assignTo="{!group_id}" value="{!grp.group_id}"/>
+                                                <apex:param id="group_name" name="group_name" assignTo="{!group_name}" value="{!grp.title}"/>   
+                                                <apex:param id="image_url" name="image_url" assignTo="{!image_url}" value="{!grp.image_url}"/>    
+                                                    <img src="{!grp.image_url}" style="width: 50px;height: 50px;border-radius: 50%;text-align: center;"/>
+                                                    <img class="cls-select-groups" src="{!URLFOR($Resource.vrp,'Assets/select_pad.png')}" style="width: 50px;height: 50px;border-radius: 50%;text-align: center;position: absolute;top: 6px;left: 38px;display:none;"/>
+                                            </apex:commandLink>
+                                            <p  style="font-size: 13px;padding-top: 5px;">
+                                                {!grp.title}
+                                            </p>
+                                        </div>
+                                    </apex:repeat>   
+                                </apex:repeat>
+                            </div>
+                        </div>
+                    </div>
+                    
+                 <div class="col-sm-12 col-xs-12 cls-video-list-div" style="display:none;">
+                    <div class="col-sm-12 col-xs-12" style="">
+                      <div class="col-sm-6 col-xs-6" style="display:inline-block;">
+                      <span style=" display: inline-block;background-color: #0f7be4;color: #fff;border-radius: 50%;width: 25px;height: 25px;">
+                          <span aria-hidden="true" class="fa fa-filter" style="text-align: center;margin: 5px 6px;font-size: 16px;"></span>
+                      </span>
+                      <span>Filter</span>
+                      <span aria-hidden="true" class="fa fa-caret-down" onclick="getList();" style="color:#0f7be4;font-size: 18px; vertical-align: middle;cursor: pointer;"></span>
+                      <div class="cls-list-div" style="display:none;position:absolute;background-color:#0f7be4;height: 125px;width: 150px;font-size: 13px;top: 30px;left: 43px;z-index: 1;">
+                          <p style="padding: 5px 10px 6px;color: #fff;border-bottom: 1px solid #fff;">Date Added</p>
+                          <p style="padding: 5px 10px 6px;color: #fff;border-bottom: 1px solid #fff;">Highly Rated</p>
+                          <p style="padding: 5px 10px 6px;color: #fff;border-bottom: 1px solid #fff;">Max Commented</p>
+                          <p style="padding: 5px 10px 6px;color: #fff;">Video Name</p>
+                      </div>
+                  </div>
+                  <div class="col-sm-6 col-xs-6" style="display:inline-block;text-align: right;">
+                      <img src="{!URLFOR($Resource.vrp,'Assets/demo_user.png')}" width="25"/>
+                      <span style="color:#0f7be4;">My view</span>
+                       <span aria-hidden="true" class="fa fa-caret-down" onclick="getMyView();" style="color:#0f7be4;font-size: 18px; vertical-align: middle;cursor: pointer;"></span>
+                      <div class="cls-my-view-div" style="display:none;position:absolute;background-color:#0f7be4;height: 65px;width: 150px;font-size: 13px;text-align: left;top: 30px;right: 15px;z-index: 1;">
+                          <p style="padding: 5px 10px 6px;color: #fff;border-bottom: 1px solid #fff;">My View</p> 
+                          <p style="padding: 5px 10px 6px;color: #fff;">Community View</p>
+                      </div>
+                  </div>
+              </div>
+              <div class="col-sm-12 col-xs-12" style="padding:15px;" id="result">
+              </div>
+            </div>
+                    
+              <div class="footer" id="footer">
+                        <div class="row">
+                            <div class="col-lg-1 col-md-1 col-xs-1 col-sm-1" id="sales_uni_logo">
+                                <img src="{!URLFOR($Resource.vrp,'Assets/SU.png')}" height="45"/>
+                            </div>
+                            <div class="col-lg-10 col-md-10 col-xs-10 col-sm-10" id="progress_bar">
+                                <span style="display:block;width:50%;text-align:right;font-size: 10px;font-weight: bold;">50%</span>
+                                <div class="progress-container round-xlarge">
+                                    <div class="progressbar round-xlarge" style="width:50%"></div>
+                                    <div class="profile-pic" style="margin-left:10px">
+                                        <img src="{!URLFOR($Resource.vrp,'Assets/21.png')}" />
+                                    </div>
+                                    <div class="profile-pic" style="margin-left:2%">
+                                        <img src="{!URLFOR($Resource.vrp,'Assets/22.png')}" />
+                                    </div>
+                                    <div class="profile-pic" style="margin-left:10%">
+                                        <img src="{!URLFOR($Resource.vrp,'Assets/23.png')}" />
+                                    </div>
+                                    <div class="profile-pic" style="margin-left:21%">
+                                        <img src="{!URLFOR($Resource.vrp,'Assets/24.png')}" />
+                                    </div>
+                                    <div class="profile-pic" style="margin-left:35%">
+                                        <img src="{!URLFOR($Resource.vrp,'Assets/25.png')}" />
+                                    </div>
+                                    <div class="profile-pic" style="margin-left:40%">
+                                        <img src="{!URLFOR($Resource.vrp,'Assets/26.png')}" />
+                                    </div>
+                                    <div class="profile-pic" style="margin-left:45%">
+                                        
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-1 col-md-1 col-xs-1 col-sm-1" style="margin-left: 15px;">
+                                <img src="{!URLFOR($Resource.vrp,'Assets/edcast.png')}" style="float:right; width:75px;margin-top: 8px;" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                 <apex:actionFunction name="searchVideoInfo" action="{!searchVideoInfo}" reRender="resultPanel" status="myStatus">
+                  <apex:param name="video_id" assignTo="{!video_id}" value="" />
+                  <apex:param name="speech_id" assignTo="{!speech_id}" value="" />    
+                  </apex:actionFunction>  
+                <apex:actionFunction action="{!getShareVideoList}" name="getShareVideoList" reRender="userJson_result" status="userJson_status"> 
+                    <apex:param name="userJson"  id="userJson" assignTo="{!userJson}"   value=""/> 
+                </apex:actionFunction>    
+            </apex:form>
+        </body>
+    </html>
+</apex:page>

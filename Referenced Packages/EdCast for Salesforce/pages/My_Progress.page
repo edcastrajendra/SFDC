@@ -1,0 +1,28 @@
+<apex:page controller="edcast.AnalyticsController" action="{!isAuthorized}" tabStyle="My_Progress__tab" sidebar="false">
+    <link href='https://fonts.googleapis.com/css?family=Lato:400,300,700,700italic,400italic,300italic,100italic,100' rel='stylesheet' type='text/css'/>
+        
+    <style>
+        .link-url {
+            font-family: Lato;
+            font-size: 18px;
+            font-style: normal;
+            font-weight: 500;
+            min-height: 400px;
+            padding: 20px;
+        }
+        .link-url a, .link-url a:hover{
+            color: #015ba7;
+            text-decoration: underline;
+            font-weight: 600;
+        }
+        
+    </style>
+    <apex:form id="frm">
+        <apex:pageMessages ></apex:pageMessages>
+        <apex:outputPanel styleClass="link-url" layout="block" rendered="{!!isErr}">
+            
+            Click&nbsp;<apex:outputLink target="_blank" value="{!linkUrl}">here</apex:outputLink> to view your progress
+        </apex:outputPanel>
+        
+    </apex:form>
+ </apex:page>
