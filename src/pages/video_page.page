@@ -1,4 +1,4 @@
-<apex:page standardStylesheets="false" sidebar="false" controller="GuidemeTourVideoInfoController" action="{!getVideoInfo}"> 
+<apex:page standardStylesheets="false" sidebar="false"  controller="GuidemeTourVideoInfoController" action="{!getVideoInfo}"> 
 <html xmlns="https://www.w3.org/2000/svg" xmlns:xlink="https://www.w3.org/1999/xlink">
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -19,7 +19,7 @@
         });
         
     });
-</script>    
+</script>   
 </head>
 <body>
     <apex:form >
@@ -71,6 +71,7 @@
           </div>
           <div class="col-sm-12 col-xs-12 cls-product-training-div">
                <div class="col-sm-12 col-xs-12" style="padding: 15px 0;">
+                   
                    <div class="col-sm-6 col-xs-6" style="padding:0;">
                        <div class="col-sm-12 col-xs-12" style="padding:0;">
                            <video style="width: 100%;height: 100%;" controls="controls">
@@ -146,6 +147,7 @@
                            </div>
                        </div>
                 </div>
+                   
                    <div class="col-sm-6 col-xs-6" style="">
                        <apex:repeat value="{!toursdto}" var="dto"> 
                      <apex:repeat value="{!dto.message.tours}" var="tour">
@@ -178,6 +180,7 @@
                            </apex:repeat>
                        </apex:repeat>
                    </div>
+                   
                </div>
           </div>
            <div class="col-sm-12 col-xs-12 cls-video-list-div" style="display:none;">

@@ -14,7 +14,8 @@ public class GuidemeTourVideoInfoController {
    private String accesstoken; 
    public String rating; 
    public String comments{set;get;}
-    public String addCommentsJson{set;get;}
+   public String addCommentsJson{set;get;}
+   public String guideme_URL = 'https://prodguidemews.wagmob.com/v1/';
    public GuidemeTourVideoInfoController(){
     config = new Config();
     salesU = new SalesUAccessToken();
@@ -39,19 +40,12 @@ public class GuidemeTourVideoInfoController {
         return options; 
     }
    public void getVideoInfo(){
-       // speech_id =  System.currentPageReference().getParameters().get('speech_id');
         tour_id =  System.currentPageReference().getParameters().get('tour_id');
         stepJson = new CallingWebServices().getRestfulGuidemeWSResponse(new Map<String,String>(),'GET',config.guideme_url+'client/tour?tour_id='+ tour_id +'&page=1'); 
         video_azure = new CallingWebServices().getJsonResponse(stepJson,'video_azure');
-        category_id =  System.currentPageReference().getParameters().get('category_id');
-        tours = new CallingWebServices().getRestfulGuidemeWSResponse(new Map<String,String>(),'GET',config.guideme_url+'client/tours?category_id='+ category_id +'&page=1'); 
+        tours = new CallingWebServices().getGuidemeWSResponseNew(new Map<String,String>(),'GET',guideme_URL+'client/usertours?page=1'); 
         toursdto = (PeersDTO)System.JSON.deserialize(tours, PeersDTO.class);
-       //try{
-       // ratingCommentsJson = new CallingWebServices().getWSResponse_SalesU(new Map<String,String>(),'GET',config.url+'/speech/ratings?speech_id='+speech_id+'&page=1',accesstoken);    
-       // }catch(Exception e){ 
-      //  }  
-       // ratingDto =  (PeersDTO)System.JSON.deserialize(ratingCommentsJson, PeersDTO.class);
-    } 
+   } 
     
     public PageReference addComments(){
        Map<String,String> parameter =new Map<String,String>();
@@ -69,14 +63,12 @@ public class GuidemeTourVideoInfoController {
        return page;
     }
     
-    public PageReference getTourVideoByTourId(){
+    public void getTourVideoByTourId(){
          String tourId =  System.currentPageReference().getParameters().get('tourId');
-         String categoryId =  System.currentPageReference().getParameters().get('categoryId');
-         PageReference page = new PageReference('/apex/video_page?sfdc.tabName='+config.currentTab);
-         page.getParameters().put('tour_id',tourId);
-         page.getParameters().put('category_id',categoryId);
-         page.setRedirect(true);
-         return page;
+         stepJson = new CallingWebServices().getRestfulGuidemeWSResponse(new Map<String,String>(),'GET',config.guideme_url+'client/tour?tour_id='+ tourId +'&page=1'); 
+        video_azure = new CallingWebServices().getJsonResponse(stepJson,'video_azure');
+        tours = new CallingWebServices().getGuidemeWSResponseNew(new Map<String,String>(),'GET',guideme_URL+'client/usertours?page=1'); 
+        toursdto = (PeersDTO)System.JSON.deserialize(tours, PeersDTO.class);
     } 
     
     public PageReference getSharePage(){

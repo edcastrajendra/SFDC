@@ -141,6 +141,39 @@ public with sharing class CallingWebServices {
         }
         return res.getBody();
     }
+    public String getGuidemeWSResponseNew(Map<String, String> parameter,String method,String url){
+        HttpRequest req = new HttpRequest();
+        HttpResponse res;
+        Http http = new Http();
+        req.setEndpoint(url);
+        req.setMethod(method);
+        req.setHeader('Content-Type','application/json');  
+        req.setHeader('AppKey','05675656-6BF5-42D6-9475-EE0103FCC123');
+        req.setHeader('UserKey','3557BDAA-B116-41DE-9D8A-DC5D99887B94');
+        if(method != 'GET'){
+        String body='';
+        for(String key : parameter.keySet()){
+        body += key+'='+EncodingUtil.urlEncode(parameter.get(key),'UTF-8')+'&';
+        }
+        req.setBody(body.removeEnd('&'));
+        }
+        req.setTimeout(60000);
+        try {
+            if(Test.isRunningTest()){
+            res = new HttpResponse();  
+            res.setHeader('Content-type', 'application/json');
+            res.setBody('{"message": "user enrollment enqueued"}');
+            res.setStatusCode(200);
+            }else {
+              res = http.send(req);    
+            }
+          
+        } catch(System.CalloutException e) {
+           System.debug('Callout error: '+ e);
+           System.debug(res.toString());
+        }
+        return res.getBody();
+    }
     public String getWSResponse_SalesU(Map<String, String> parameter,String method,String url,String accesstoken){
         HttpRequest req = new HttpRequest();
         HttpResponse res;

@@ -1,0 +1,21 @@
+<apex:page showHeader="false" controller="ResubmissionController" cache="false">
+    <apex:outputPanel layout="block">
+        <apex:form >
+            <apex:pageBlock rendered="{!isShow}" title="Create Contact">
+                <apex:pageBlockButtons >
+                    <apex:commandButton value="Save" action="{!save}"/>
+                </apex:pageBlockButtons>
+                <apex:pageBlockSection >
+                    <apex:inputField value="{!contact.LastName}" />
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+        </apex:form>
+        <apex:form >
+          <apex:pageBlock rendered="{!!isShow}" title="Show Recent Contacts">
+              <apex:pageBlockTable value="{!contactList}" var="con" >
+                  <apex:column value="{!con.LastName}"/>
+              </apex:pageBlockTable>
+          </apex:pageBlock>
+        </apex:form>
+    </apex:outputPanel>
+</apex:page>

@@ -1,4 +1,4 @@
-<apex:page standardStylesheets="false" sidebar="false" controller="GuidemeTourController" action="{!getGuidemeTour}"> 
+<apex:page standardStylesheets="false" sidebar="false"  controller="GuidemeTourController" action="{!getGuidemeTour}"> 
 <html xmlns="https://www.w3.org/2000/svg" xmlns:xlink="https://www.w3.org/1999/xlink">
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
