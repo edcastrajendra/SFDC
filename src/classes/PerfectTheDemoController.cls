@@ -5,12 +5,12 @@ public class PerfectTheDemoController {
     }
     
     public PageReference getMyDemo(){
-        PageReference page = new PageReference('/apex/g_cat?sfdc.tabName='+config.currentTab); 
+        PageReference page = new PageReference('/apex/tour?sfdc.tabName='+config.currentTab); 
         return page;
     }
     
     public PageReference getCommunityDemo(){
-        PageReference page = new PageReference('/apex/g_cat?sfdc.tabName='+config.currentTab); 
+        PageReference page = new PageReference('/apex/tour?sfdc.tabName='+config.currentTab); 
         return page;
     }
     public PageReference getPerfectThePitch(){
