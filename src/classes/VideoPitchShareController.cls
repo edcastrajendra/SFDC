@@ -9,6 +9,7 @@ public class VideoPitchShareController {
      private Config config;
      private SalesUAccessToken salesU;
      public String accesstoken;
+     public String searchQuery{set;get;}
      public VideoPitchShareController(){
         config=new Config();
          salesU = new SalesUAccessToken();
@@ -41,19 +42,17 @@ public class VideoPitchShareController {
          PageReference page = new PageReference('/apex/perfect_the_demo?sfdc.tabName='+config.currentTab); 
         return page;
     }
-    public PageReference searchVideoInfo(){ 
-        String video_id = System.currentPageReference().getParameters().get('video_id');
-        String speech_id = System.currentPageReference().getParameters().get('speech_id');  
+    public PageReference searchVideoInfo(){   
         PageReference page = new PageReference('/apex/share_pitch?sfdc.tabName='+config.currentTab);
-        page.getParameters().put('video_id',video_id);
         page.getParameters().put('speech_id',speech_id);
+        page.getParameters().put('query',searchQuery);
         page.setRedirect(true);
         return page;
     } 
     public PageReference searchVideoInfoDemo(){ 
         PageReference page = new PageReference('/apex/video_page?sfdc.tabName='+config.currentTab);
         page.getParameters().put('tour_id',tour_id);
-         page.getParameters().put('category_id',category_id);
+        page.getParameters().put('query',searchQuery);
         page.setRedirect(true);
         return page;
     } 

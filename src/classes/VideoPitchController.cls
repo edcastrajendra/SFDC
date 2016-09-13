@@ -1,4 +1,4 @@
-public class VideoPitchController {
+public class VideoPitchController{
     private Config config;
     public String locator_url{set;get;}
     public String asset_id{set;get;}
@@ -17,11 +17,16 @@ public class VideoPitchController {
     public String accesstoken;
     public String tour_id{set;get;}
     public String category_id{set;get;}
+    public String searchQuery{set;get;}
+    public Boolean video_share{set;get;}
+    public Boolean video_share_submit{set;get;}
+    public String add_speech_response{set;get;}
     public VideoPitchController(){
+          video_share = false;
+          video_share_submit = true;
           config = new Config();
-          salesUAccessToken = new SalesUAccessToken();
         if(accesstoken == null){
-         accesstoken = salesUAccessToken.getAccessToken();    
+        accesstoken = new SalesUAccessToken().getAccessToken();
         }
     }
      public void getLocatorURL(){
@@ -31,9 +36,7 @@ public class VideoPitchController {
          
          }
         locator_url = new CallingWebServices().getJsonResponse(jsondata,'_locator_url');
-        asset_id = new CallingWebServices().getJsonResponse(jsondata,'_asset_id');
-        locator_id= new CallingWebServices().getJsonResponse(jsondata,'_locator_id');
-        access_policy_id = new CallingWebServices().getJsonResponse(jsondata,'_access_policy_id');
+        
     }
     public PageReference cancel(){
          PageReference page = new PageReference('/apex/pitch_video?sfdc.tabName='+config.currentTab);
@@ -44,51 +47,49 @@ public class VideoPitchController {
          PageReference page = new PageReference('/apex/perfect_the_demo?sfdc.tabName='+config.currentTab); 
         return page;
     }
-    public PageReference addVideoInfo(){
-       Map<String,String> parameter = new Map<String,String>();
+    public void addVideoInfo(){
+         try{
+          asset_id = new CallingWebServices().getJsonResponse(jsondata,'_asset_id');
+          locator_id= new CallingWebServices().getJsonResponse(jsondata,'_locator_id');
+          access_policy_id = new CallingWebServices().getJsonResponse(jsondata,'_access_policy_id');
+          Map<String,String> parameter = new Map<String,String>();
           parameter.put('asset_id', asset_id);
           parameter.put('locator_id', locator_id);
-          parameter.put('access_policy_id', access_policy_id);
-         
-         try{
+          parameter.put('access_policy_id', access_policy_id);  
           uploadstatus =  new CallingWebServices().getWSResponse_SalesU(parameter,'POST',config.url+'/file/uploadstatus',accesstoken); 
-         }catch(Exception e){
-         }
           video_id =  new CallingWebServices().getJsonResponse(uploadstatus,'video_id');
           video_url = new CallingWebServices().getJsonResponse(uploadstatus,'video_url');
-         parameter.put('title', video_title);
-         parameter.put('description', video_desc);
-         parameter.put('video_id', video_id);
-        
-         String response;
-        try{
-         response = new CallingWebServices().getWSResponse_SalesU(parameter,'POST',config.url+'/speech/add',accesstoken); 
-        }catch(Exception e){
-         
-        }
-        speech_id =  new CallingWebServices().getJsonResponse(response,'speech_id');
-        rating =     new CallingWebServices().getJsonResponse(response,'rating');
-        PageReference page  = new PageReference('/apex/share?sfdc.tabName='+config.currentTab);
+          parameter.put('title', video_title);
+          parameter.put('description', video_desc);
+          parameter.put('video_id', video_id); 
+          add_speech_response = new CallingWebServices().getWSResponse_SalesU(parameter,'POST',config.url+'/speech/add',accesstoken); 
+          speech_id =  new CallingWebServices().getJsonResponse(add_speech_response,'speech_id');
+          rating =     new CallingWebServices().getJsonResponse(add_speech_response,'rating');     
+          }catch(Exception e){
+          }
+         video_share_submit = false;
+         video_share=true;
+        // return page;
+    }
+    public PageReference getVideoShareInfo(){
+        PageReference page = new PageReference('/apex/share_user?sfdc.tabName='+config.currentTab+video_id);
         page.getParameters().put('video_id',video_id);
         page.getParameters().put('speech_id',speech_id);
         page.getParameters().put('rating',rating);
         page.setRedirect(true);
-         return page;
-    }
-    
+        return page;
+    }  
      public PageReference searchVideoInfo(){ 
-        video_id = System.currentPageReference().getParameters().get('video_id');
-        String speech_id = System.currentPageReference().getParameters().get('speech_id');
         PageReference page = new PageReference('/apex/share_pitch?sfdc.tabName='+config.currentTab);
-        page.getParameters().put('video_id',video_id);
         page.getParameters().put('speech_id',speech_id);
+        page.getParameters().put('query',searchQuery);
         page.setRedirect(true);
         return page;
     }
     public PageReference searchVideoInfoDemo(){ 
         PageReference page = new PageReference('/apex/video_page?sfdc.tabName='+config.currentTab);
         page.getParameters().put('tour_id',tour_id);
-         page.getParameters().put('category_id',category_id);
+        page.getParameters().put('query',searchQuery);
         page.setRedirect(true);
         return page;
     }

@@ -19,13 +19,14 @@ public class VideoPitchShareUserController {
     private String accesstoken;
     public String userJson{set;get;}
     public String rating{set;get;}
-     public String image_url{set;get;}
-     public String group_name{set;get;}
+    public String image_url{set;get;}
+    public String group_name{set;get;}
     public String speechJson{set;get;}
     public String thumb_url{set;get;}
     public String title{set;get;}
     public String tour_id{set;get;}
     public String category_id{set;get;}
+     public String searchQuery{set;get;}
     public VideoPitchShareUserController(){
         config = new Config();
          salesU = new SalesUAccessToken();
@@ -47,7 +48,7 @@ public class VideoPitchShareUserController {
          groupsJson = new CallingWebServices().getWSResponse_SalesU(new Map<String,String>(),'GET',Config.url+'/user/groups?page=1',accesstoken);
          groupsDto  = (PeersDTO)System.JSON.deserialize(groupsJson, PeersDTO.class);   
          video_url = new CallingWebServices().getJsonResponse(jsonString, 'thumb_url'); 
-         speechJson  = new CallingWebServices().getWSResponse_SalesU(new Map<String,String>(),'GET',Config.url+'/speech/speech?speech_id=20',accesstoken);  
+         speechJson  = new CallingWebServices().getWSResponse_SalesU(new Map<String,String>(),'GET',Config.url+'/speech/speech?speech_id='+speech_id,accesstoken);  
          thumb_url = new CallingWebServices().getJsonResponse(speechJson, 'thumb_url'); 
           title  = new CallingWebServices().getJsonResponse(speechJson, 'title'); 
         }catch(Exception e){ }  
@@ -102,19 +103,17 @@ public class VideoPitchShareUserController {
         return page;
     }
     
-    public PageReference searchVideoInfo(){ 
-        String video_id = System.currentPageReference().getParameters().get('video_id');
-        String speech_id = System.currentPageReference().getParameters().get('speech_id');  
+    public PageReference searchVideoInfo(){  
         PageReference page = new PageReference('/apex/share_pitch?sfdc.tabName='+config.currentTab);
-        page.getParameters().put('video_id',video_id);
         page.getParameters().put('speech_id',speech_id);
+        page.getParameters().put('query',searchQuery);
         page.setRedirect(true);
         return page;
     } 
     public PageReference searchVideoInfoDemo(){ 
         PageReference page = new PageReference('/apex/video_page?sfdc.tabName='+config.currentTab);
         page.getParameters().put('tour_id',tour_id);
-         page.getParameters().put('category_id',category_id);
+        page.getParameters().put('query',searchQuery);
         page.setRedirect(true);
         return page;
     }

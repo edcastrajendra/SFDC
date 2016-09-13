@@ -7,11 +7,11 @@
             <link rel="stylesheet" href="{!URLFOR($Resource.Assets_SU,'Styles/main-css.css')}"/>
             <apex:includeScript value="{!URLFOR($Resource.Assets_SU,'js/jquery.min.js')}" />
             <apex:includeScript value="{!URLFOR($Resource.Assets_SU,'js/jquery-ui.min.js')}" />
+            <c:script_component ></c:script_component>  
             <title>Perfect The Pitch</title>
         </head>
         <body>
-            <c:script_component ></c:script_component>  
-            <apex:form >
+        <apex:form >
             <div class="col-sm-12 col-xs-12" style="padding:0">
                 <div class="header-section" id="header">
                     <div class="cls-header-first-div">
@@ -106,13 +106,12 @@
                           <p style="padding: 5px 10px 6px;color: #fff;">Community View</p>
                       </div>
                   </div>
-              </div>
+              </div>    
               <div class="col-sm-12 col-xs-12" style="padding:15px;" id="result">
                   
               </div>
-                </div>
-                
-                <div class="footer" id="footer">
+              </div>
+              <div class="footer" id="footer">
                     <div class="row">
                         <div class="col-lg-1 col-md-1 col-xs-1 col-sm-1" id="sales_uni_logo">
                             <img src="{!URLFOR($Resource.vrp,'Assets/SU.png')}" height="45"/>
@@ -134,14 +133,14 @@
                     </div>
                 </div>
             </div>
-            <apex:actionFunction name="searchVideoInfo" action="{!searchVideoInfo}" reRender="resultPanel" status="myStatus">
-            <apex:param name="video_id" assignTo="{!video_id}" value="" />
-            <apex:param name="speech_id" assignTo="{!speech_id}" value="" />    
+            <apex:actionFunction name="searchVideoInfoDemo" action="{!searchVideoInfoDemo}" reRender="searchDemoResultPanel" status="searchDemoStatus">
+            <apex:param name="speech_id" assignTo="{!speech_id}" value="" />
+            <apex:param name="searchQuery" assignTo="{!searchQuery}" value="" />
             </apex:actionFunction> 
-            <apex:actionFunction name="searchVideoInfoDemo" action="{!searchVideoInfoDemo}" reRender="resultPanel" status="myStatus">
-            <apex:param name="video_id" assignTo="{!tour_id}" value="" />
-            <apex:param name="category_id" assignTo="{!category_id}" value="" />  
-            </apex:actionFunction>      
+            <apex:actionFunction name="searchVideoInfo" action="{!searchVideoInfo}" reRender="searchResultPanel" status="searchStatus">
+            <apex:param name="speech_id" assignTo="{!speech_id}" value="" />
+            <apex:param name="searchQuery" assignTo="{!searchQuery}" value="" />
+            </apex:actionFunction>     
            </apex:form>     
         </body>
     </html>

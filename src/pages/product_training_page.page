@@ -23,7 +23,7 @@
                                         <span style="font-weight: 100;" class="change-search-option">Search Pitch</span>
                                         <span class="fa fa-chevron-down" onclick="searchOption();" style="padding-left: 5px;cursor:pointer;"></span>
                                     </div>
-                                    <input class="cls-search-input-sfdc" name="search" type="text" />
+                                    <input class="cls-search-input-sfdc" id="search-input-sfdc" name="search" type="text" />
                                     <input class="cls-demo-search-input-sfdc" name="search" type="text"/>
                                     <div class="cls-label-search-pop-div">
                                         <div style="padding:10px 5px;border-bottom: 1px solid #ccc;cursor: pointer;">
@@ -130,13 +130,13 @@
                     </div>
                 </div>
             </div>
-   <apex:actionFunction name="searchVideoInfo" action="{!searchVideoInfo}" reRender="resultPanel" status="myStatus">
-     <apex:param name="video_id" assignTo="{!video_id}" value="" />
-     <apex:param name="speech_id" assignTo="{!speech_id}" value="" />    
+   <apex:actionFunction name="searchVideoInfo" action="{!searchVideoInfo}" reRender="searchResultPanel" status="searchStatus">
+     <apex:param name="speech_id" assignTo="{!speech_id}" value="" />
+     <apex:param name="searchQuery" assignTo="{!searchQuery}" value="" />
     </apex:actionFunction> 
   <apex:actionFunction name="searchVideoInfoDemo" action="{!searchVideoInfoDemo}" reRender="resultPanel" status="myStatus">
      <apex:param name="tour_id" assignTo="{!tour_id}" value="" />
-     <apex:param name="category_id" assignTo="{!category_id}" value="" />  
+     <apex:param name="searchQuery" assignTo="{!searchQuery}" value="" />  
     </apex:actionFunction>    
  </apex:form>          
 </body>

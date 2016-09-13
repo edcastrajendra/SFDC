@@ -4,15 +4,15 @@ global class AutoCompleteController {
     private static String Access_Token = null;
    @RemoteAction
     public static PeersDTO getAutoComplete(String searchTerm,String pageNumber){  
-         
+    searchTerm = EncodingUtil.urlEncode(searchTerm,'UTF-8');     
         if(Access_Token == null){
            Access_Token = getAccessToken(); 
         }
-        
-           return (PeersDTO)System.JSON.deserialize(getValue(Access_Token,searchTerm,pageNumber), PeersDTO.class);
+      return (PeersDTO)System.JSON.deserialize(getValue(Access_Token,searchTerm,pageNumber), PeersDTO.class);
     }
     @RemoteAction
-    public static PeersDTO getAutoCompleteGuidemeTour(String searchTerm){  
+    public static PeersDTO getAutoCompleteGuidemeTour(String searchTerm){
+           searchTerm = EncodingUtil.urlEncode(searchTerm,'UTF-8');
            return (PeersDTO)System.JSON.deserialize(getGuidemeTourVideoResult(searchTerm), PeersDTO.class);
     }
     public static String getGuidemeTourVideoResult(String searchTerm){

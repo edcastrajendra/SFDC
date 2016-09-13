@@ -10,6 +10,8 @@ public class PitchController {
      public boolean communityView{set;get;}
      public String tour_id{set;get;}
      public String category_id{set;get;}
+     public String speech_id{set;get;}
+     public String searchQuery{set;get;}
     public PitchController(){
          config = new Config();
          salesU = new SalesUAccessToken();
@@ -48,30 +50,20 @@ public PageReference getpitchVideo(){
     } 
     
      public PageReference getPitchVideoInfo(){
-          String video_id =  System.currentPageReference().getParameters().get('video_id');
           String speech_id =  System.currentPageReference().getParameters().get('speech_id');
-          String rating =  System.currentPageReference().getParameters().get('rating');
           PageReference page = new PageReference('/apex/share_pitch?sfdc.tabName='+config.currentTab); 
-          page.getParameters().put('video_id',video_id);
           page.getParameters().put('speech_id',speech_id);
-          page.getParameters().put('rating',rating);
           return page; 
          } 
     public PageReference getCommunityPitchVideoInfo(){
-          String video_id =  System.currentPageReference().getParameters().get('video_id');
           String speech_id =  System.currentPageReference().getParameters().get('speech_id');
-          String rating =  System.currentPageReference().getParameters().get('rating');
           PageReference page = new PageReference('/apex/share_community?sfdc.tabName='+config.currentTab); 
-          page.getParameters().put('video_id',video_id);
           page.getParameters().put('speech_id',speech_id);
-          page.getParameters().put('rating',rating);
           return page; 
          }
-    public PageReference searchVideoInfo(){ 
-        String video_id = System.currentPageReference().getParameters().get('video_id');
-        String speech_id = System.currentPageReference().getParameters().get('speech_id');  
+    public PageReference searchVideoInfo(){   
         PageReference page = new PageReference('/apex/share_pitch?sfdc.tabName='+config.currentTab);
-        page.getParameters().put('video_id',video_id);
+        page.getParameters().put('query',searchQuery);
         page.getParameters().put('speech_id',speech_id);
         page.setRedirect(true);
         return page;
@@ -79,7 +71,7 @@ public PageReference getpitchVideo(){
      public PageReference searchVideoInfoDemo(){ 
         PageReference page = new PageReference('/apex/video_page?sfdc.tabName='+config.currentTab);
         page.getParameters().put('tour_id',tour_id);
-         page.getParameters().put('category_id',category_id);
+         page.getParameters().put('query',searchQuery);
         page.setRedirect(true);
         return page;
     }

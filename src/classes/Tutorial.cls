@@ -1,0 +1,19 @@
+public class Tutorial {
+    public String tutorialid{set;get;}
+       public String taskid{set;get;}
+       public String tutorialfilename{set;get;}
+       public String containerid{set;get;}
+       public String tutorialtitle{set;get;}
+       public String elementtitle{set;get;}
+       public String taskimage{set;get;}
+       public String tutorialview{set;get;}
+       public String ismandatory{set;get;}
+    
+    public String getTaskId(){
+        return taskid;
+    } 
+    public String getIsmandatory(){
+        return ismandatory;
+    }
+    
+}
