@@ -11,6 +11,7 @@
     <title>Perfect The Pitch</title>
     </head>
 <body>
+    <apex:form >
     <div class="col-sm-12 col-xs-12" style="padding:0">
        	  <div class="header-section" id="header">
               <div class="cls-header-first-div">
@@ -44,7 +45,9 @@
               <div class="header-second col-sm-12 col-xs-12">
                     <div class="col-lg-9 col-md-9 col-sm-9 col-xs-9">
                         <div class="site-map" style="display: inline-block;padding: 5px 20px 0px 0;float: left;">
-                          <span style="padding: 5px 0;float: left;">Perfect The Pitch</span>
+                        <apex:commandLink action="{!getPerfectThePitch}" value="">    
+                          <span style="padding: 5px 0;float: left;color: #888888;">Perfect The Pitch</span>
+                            </apex:commandLink>
                         </div>
                         <div class="site-map" style="display: inline-block;padding: 5px 20px 0px 0;float: left;">
                           <span style="padding: 5px 0;float: left;border-bottom: 1px solid #0f7be4;color:#0f7be4;">Perfect The Demo</span>
@@ -54,7 +57,6 @@
           </div>
          
           <div class="col-sm-12 col-xs-12 cls-product-training-div" style="display:block;">              
-              <apex:form >
               <div class="col-sm-12 col-xs-12" style="padding:15px;">
                   <apex:repeat value="{!toursdto.message.tours}" var="tour">
                    <div class="col-sm-4 col-xs-4 col-lg-3" style="display:inline-block;padding: 15px;">
@@ -91,9 +93,7 @@
                  
             
               </div>
-              </apex:form>
           </div>
-          <apex:form >
          <div class="col-sm-12 col-xs-12 cls-video-list-div" style="display:none;">
                     <div class="col-sm-12 col-xs-12" style="">
                       <div class="col-sm-6 col-xs-6" style="display:inline-block;">
@@ -122,7 +122,14 @@
               <div class="col-sm-12 col-xs-12" style="padding:15px;" id="result">
               </div>
             </div> 
-         </apex:form>
+          <apex:actionFunction name="searchVideoInfo" action="{!searchVideoInfo}" reRender="resultPanel" status="myStatus">
+            <apex:param name="speech_id" assignTo="{!speech_id}" value="" />          
+            <apex:param name="searchQuery" assignTo="{!searchQuery}" value="" />
+            </apex:actionFunction> 
+           <apex:actionFunction name="searchVideoInfoDemo" action="{!searchVideoInfoDemo}" reRender="resultPanel" status="myStatus">
+            <apex:param name="tour_id" assignTo="{!tour_id}" value="" />          
+            <apex:param name="searchQuery" assignTo="{!searchQuery}" value="" />
+            </apex:actionFunction>   
           <div class="footer" id="footer">
               <div class="row">
                   <div class="col-lg-1 col-md-1 col-xs-1 col-sm-1" id="sales_uni_logo">
@@ -161,7 +168,7 @@
               </div>
           </div>
       </div>
-      <div class="cls-back-div"></div>
+    </apex:form>     
 </body>
 </html>
 </apex:page>

@@ -7,19 +7,23 @@
             <link rel="stylesheet" href="{!URLFOR($Resource.Assets_SU,'Styles/main-css.css')}"/>
             <apex:includeScript value="{!URLFOR($Resource.Assets_SU,'js/jquery.min.js')}" />
             <apex:includeScript value="{!URLFOR($Resource.Assets_SU,'js/jquery-ui.min.js')}" /> 
+            <c:script_component ></c:script_component>     
             <title>Perfect The Pitch</title>
             <script>
-            function postComments(){
+            function postComments(speech_id){
                  var rating = $("input[name='rating']:checked").val();
                  var comments = $("input[name='comments']").val();
-                 addComments(rating,comments); 
+                console.log(speech_id);
+                 addComments(rating,comments,speech_id); 
+                }
+            function getPitchVideo(video_id,speech_id,rating){
+                getPitchVideoInfo(video_id,speech_id,rating);
                 }
             </script> 
 </head>
 <body>
+<apex:form >    
 <div class="col-sm-12 col-xs-12" style="padding:0">
-     <apex:form >
-      <c:script_component ></c:script_component>     
       <div class="header-section" id="header">
          <div class="cls-header-first-div">
                     <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
@@ -68,14 +72,12 @@
                             </div>
                         </div>
        </div>
-      </apex:form>
         <div class="col-sm-12 col-xs-12 cls-product-training-div">
                         <div class="col-sm-12 col-xs-12" style="padding: 15px 0;">
                             <div class="col-sm-6 col-xs-6" style="padding:0;">
-                                <div class="col-sm-12 col-xs-12" style="padding:0;">
-                                    <video style="width: 100%;height: 100%;" controls="controls">
-                                        <source  src="{!video_azure}" type="video/mp4"/>
-                                    </video>  
+                            <apex:outputPanel id="videoResultPanel"> 
+                                <div class="col-sm-12 col-xs-12" style="padding:0;background:#0f7be4;" >
+                                 <apex:iframe height="400" src="{!video_azure}" frameborder="0"/>   
                                 </div>
                                 <div class="col-sm-12 col-xs-12" style="padding:0;">
                                     <div class="col-sm-6 col-xs-6" style="padding: 3px 0;font-size: 12px;">
@@ -118,15 +120,13 @@
                                     </div>
                                     <div class="col-sm-6 col-xs-6" style="text-align: right;padding:8px 10px;">
                                         <div id="shares" style="">
-                                            <apex:form >
                                             <apex:commandLink action="{!getSharePage}" value="">
                                             <img style="cursor:pointer; width:15px;height:15px;" src="{!URLFOR($Resource.vrp,'Assets/share_icon.png')}"/>
                                             </apex:commandLink>
-                                            </apex:form>
                                         </div>
                                     </div>
-                                </div>
-                                <apex:form >
+                                </div> 
+                               <apex:outputPanel id="commentResultPanel">
                                 <div class="col-sm-12 col-xs-12" style="padding: 0 10px 10px 5px;background-color: #f1f1f1;">
                                     <apex:repeat value="{!ratingDto}" var="dto">
                                      <div class="col-sm-12 col-xs-12" style="padding:7px 0 0;">
@@ -202,7 +202,7 @@
                                     <div class="col-sm-12 col-xs-12" style="padding:0;" >
                                         <label class="col-xs-12">
                                             <input type="text" class="input-comments" name="comments" placeholder="Add Comment" style="height: 30px;"/>
-                                            <span onclick="postComments();" style="position: absolute !important;right: 20px;color: #0f7be4 !important;top: 5px;font-size: 12px;cursor: pointer !important;">
+                                            <span onclick="postComments({!speech_id});" style="position: absolute !important;right: 20px;color: #0f7be4 !important;top: 5px;font-size: 12px;cursor: pointer !important;">
                                                 Post  
                                             </span>
                                         </label>
@@ -222,24 +222,20 @@
                                             </span>
                                         </div>
                                     </div>
-                                </div>
-                                </apex:form>
+                                </div>   
+                                </apex:outputPanel>
+                               </apex:outputPanel>
+                                
                             </div>
-                            <apex:form >
                             <div class="col-sm-6 col-xs-6" style="overflow: scroll;height: 610px;">
-                                <apex:repeat value="{!dto}" var="dto"> 
+                                <apex:repeat value="{!ourPitchDto}" var="dto"> 
                                     <apex:repeat value="{!dto.message.speech}" var="spee">
                                         <apex:repeat value="{!spee}" var="sp">
                                         <div class="col-sm-12 col-xs-12" style="padding: 15px 0 0 15px;border-left: 1px solid #cccccc;">
                                             <div class="col-sm-12" style="padding: 0 0 10px;">
                                                 <div class="col-sm-6 col-xs-6" style="padding:0;">
                                                 <img src="{!sp.thumb_url}" class="col-sm-12 col-xs-12" style="padding:0;max-height:150px;"/>
-                                                <apex:commandLink action="{!getPitchVideoInfo}" value="">  
-                                                <apex:param name="videoid" id="videoid" assignTo="{!videoid}" value="{!sp.video_id}"/> 
-                                                <apex:param name="speechid" id="speechid" assignTo="{!speechid}" value="{!sp.speech_id}"/> 
-                                                <apex:param name="rating" id="rating" assignTo="{!rating}" value="{!sp.rating}"/>      
-                                                <img src="{!URLFOR($Resource.Assets_SU,'Assets/video_play_btn.png')}" class="img-responsive" style="display:block;position:absolute;left: 50%;top: 50%;transform: translate(-50%,-50%);width: 25%;"/>
-                                                </apex:commandLink>
+                                                <img onclick="getPitchVideo('{!sp.video_id}','{!sp.speech_id}','{!sp.rating}');" src="{!URLFOR($Resource.Assets_SU,'Assets/video_play_btn.png')}" class="img-responsive" style="cursor:pointer;display:block;position:absolute;left: 50%;top: 50%;transform: translate(-50%,-50%);width: 25%;"/>
                                                 </div>
                                                 <div class="col-sm-6 col-xs-6" >
                                                     <p style="padding:0 0 10px;">
@@ -261,10 +257,8 @@
                                     </apex:repeat>
                                 </apex:repeat>
                             </div>
-                           </apex:form>     
                         </div>
                     </div>
-         <apex:form >
          <div class="col-sm-12 col-xs-12 cls-video-list-div" style="display:none;">
                     <div class="col-sm-12 col-xs-12" style="">
                       <div class="col-sm-6 col-xs-6" style="display:inline-block;">
@@ -293,19 +287,24 @@
               <div class="col-sm-12 col-xs-12" style="padding:15px;" id="result">
               </div>
             </div> 
-          <apex:actionFunction name="searchVideoInfo" action="{!searchVideoInfo}" reRender="resultPanel" status="myStatus">
-          <apex:param name="video_id" assignTo="{!video_id}" value="" />
-          <apex:param name="speech_id" assignTo="{!speech_id}" value="" />    
-          </apex:actionFunction> 
+          <apex:actionFunction name="searchVideoInfo" action="{!searchVideoInfo}" reRender="searchResultPanel" status="searchResultPanelMyStatus">
+          <apex:param name="speech_id" assignTo="{!speech_id}" value="" />
+          <apex:param name="queryTerm" assignTo="{!queryTerm}" value="" />  
+          </apex:actionFunction>
+          <apex:actionFunction name="getPitchVideoInfo" action="{!getPitchVideoInfo}" reRender="videoResultPanel" status="videoStatus">
+          <apex:param name="video_id" assignTo="{!video_id}" value="" /> 
+          <apex:param name="speech_id" assignTo="{!speech_id}" value="" /> 
+          <apex:param name="currentVideoRating" assignTo="{!currentVideoRating}" value="" />    
+          </apex:actionFunction>   
           <apex:actionFunction name="searchVideoInfoDemo" action="{!searchVideoInfoDemo}" reRender="resultPanel" status="myStatus">
           <apex:param name="video_id" assignTo="{!tour_id}" value="" />
-          <apex:param name="category_id" assignTo="{!category_id}" value="" />  
+          <apex:param name="queryTerm" assignTo="{!queryTerm}" value="" />  
           </apex:actionFunction>
-          <apex:actionFunction name="addComments" action="{!addComments}" reRender="resultPanel" status="myStatus">
+          <apex:actionFunction name="addComments" action="{!addComments}" reRender="commentResultPanel" status="commentStatus">
           <apex:param name="rating" assignTo="{!rating}" value="" />
-          <apex:param name="comments" assignTo="{!comments}" value="" />  
+          <apex:param name="comments" assignTo="{!comments}" value="" /> 
+          <apex:param name="speech_id" assignTo="{!speech_id}" value="" />    
           </apex:actionFunction>   
-          </apex:form>
                     <div class="footer" id="footer">
                         <div class="row">
                             <div class="col-lg-1 col-md-1 col-xs-1 col-sm-1" id="sales_uni_logo">
@@ -344,7 +343,7 @@
                         </div>
                     </div>
                 </div>
-    
+    </apex:form>
 </body>
     </html>
 </apex:page>

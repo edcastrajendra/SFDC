@@ -129,10 +129,8 @@
                          </div>
                          <div class="col-sm-12 col-xs-12" style="padding:0;">
                               <img class="col-sm-12 col-xs-12" style="padding:0;max-height:150px;" src="{!speech.thumb_url}"/>
-                              <apex:commandLink action="{!getCommunityPitchVideoInfo}" value="">
-                              <apex:param id="video_id" name="video_id" assignTo="{!video_id}" value="{!speech.video_id}"/>   
+                              <apex:commandLink action="{!getCommunityPitchVideoInfo}" value="">   
                                <apex:param id="speech_id" name="speech_id" assignTo="{!speech_id}" value="{!speech.speech_id}"/> 
-                               <apex:param id="rating" name="rating" assignTo="{!rating}" value="{!speech.rating}"/> 
                               <img class="img-responsive" style="display:block;position:absolute;left: 50%;top: 50%;transform: translate(-50%,-50%);width: 20%;" src="{!URLFOR($Resource.Assets_SU,'Assets/video_play_btn.png')}"/>
                              </apex:commandLink>
                             </div>
@@ -221,9 +219,13 @@
               </div>
             </div> 
           <apex:actionFunction name="searchVideoInfo" action="{!searchVideoInfo}" reRender="resultPanel" status="myStatus">
-          <apex:param name="video_id" assignTo="{!video_id}" value="" />
-          <apex:param name="speech_id" assignTo="{!speech_id}" value="" />    
+          <apex:param name="speech_id" assignTo="{!speech_id}" value="" />          
+          <apex:param name="searchQuery" assignTo="{!searchQuery}" value="" />
           </apex:actionFunction>
+          <apex:actionFunction name="searchVideoInfoDemo" action="{!searchVideoInfoDemo}" reRender="resultPanel" status="myStatus">
+          <apex:param name="tour_id" assignTo="{!tour_id}" value="" /> 
+          <apex:param name="searchQuery" assignTo="{!searchQuery}" value="" />    
+          </apex:actionFunction>    
         </apex:form>
           <div class="footer" id="footer">
               <div class="row">

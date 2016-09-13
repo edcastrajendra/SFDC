@@ -1,6 +1,6 @@
 <apex:component controller="AutoCompleteController"> 
 <script>
- var maxBlockSize = 256 * 1024;//Each file will be split in 256 KB.
+        var maxBlockSize = 256 * 1024;//Each file will be split in 256 KB.
         var numberOfPages = 1;
         var numberOfBlocks = 1;
         var selectedFile = null;
@@ -188,67 +188,16 @@ AutoCompleteController.getAutoComplete(queryTerm,numberOfPages, function(result,
 }    
  $(document).ready(function(){
                var queryTerm;
-                $(".cls-demo-search-input-sfdc").autocomplete({
-                source : function (request, response) { 
-                  queryTerm = request.term;
-                    AutoCompleteController.getAutoCompleteGuidemeTour(queryTerm, function(result, event){
-                        if(event.type == 'exception') {
-                              console.log('exception>>>>>>>>>>>>'+event.message);
-                        } else {
-                     
-                    var objectArray = result.message.tours;
-                    console.log(objectArray);        
-                     var htmlResult='';       
-                   for(var i=0;i<objectArray.length;i++){
-                       htmlResult += '<div class="col-sm-4 col-xs-4 col-lg-3" style="display:inline-block;padding: 15px;">'
-                     +' <div class="col-sm-12 col-xs-12" style="padding:10px 10px 0;display:inline-block;box-shadow: -2px 2px 5px #d9d9d9;background-color: #fafafa;border: 1px solid #e0e0e0;">'
-                         +'<div class="col-sm-12 col-xs-12" style="padding: 0 0 5px;">'
-                                +' <span style="font-size: 13px;font-weight:bold;white-space: nowrap;text-overflow: ellipsis;overflow: hidden;display: block;" class="ng-binding">'+objectArray[i].tour_title+'</span>'
-                        +' </div>'
-                        +' <div class="col-sm-12 col-xs-12" style="padding:0;">'
-                              +'<img class="col-sm-12 col-xs-12" src="'+objectArray[i].tour_image+'" style="padding:0;height:150px;">'
-                             +'<img class="img-responsive" onclick="searchVideoInfoDemo('+objectArray[i].tour_id+','+objectArray[i].category_id+')" style="cursor: pointer;display:block;position:absolute;left: 50%;top: 50%;transform: translate(-50%,-50%);width: 20%;" src="{!URLFOR($Resource.Assets_SU,"Assets/video_play_btn.png")}"/>'
-                          +'</div>'
-                          +'<div style="float:left;width:100%;padding:5px 0;">'
-                              +'<div style="padding: 0px;float:left;">'
-                                 +'<div style="display:inline-block;font-size: 11px;">'
-                                  +'<span class="star" style="color:#0f7be4;"></span>'
-                                  +'<span class="star" style="color:#0f7be4;"></span>'
-                                  +'<span class="star" style="color:#0f7be4;"></span>'
-                                 +' <span class="star" style="color:#0f7be4;"></span>'
-                                  +'<span class="star" style="color:#0f7be4;"></span>'
-                                 +'</div>'
-                              +'</div>'
-                               +'<div style="float:right;padding: 2px;">'
-                                 +' <span style="color:#888888;text-align:right;font-size: 12px;" class="ng-binding"> 0'
-                                     +' <span aria-hidden="true" class="fa fa-commenting-o" style="font-size: 14px;"></span>'
-                                  +'</span>'
-                                  +'<span style="color:#888888;text-align:right;font-size: 12px;">1000 '
-                                     +' <span aria-hidden="true" class="fa fa-eye" style="font-size: 14px;"></span>'
-                                  +'</span>'
-                              +'</div>'
-                          +'</div>'
-                      +'</div>'
-                  +'</div>';
-                     } 
-                      $('.cls-demo-search-input-sfdc').removeClass('working'); 
-                      $('.cls-product-training-div').hide();   
-                       $('.cls-video-list-div').show();     
-                      $('#result').html(htmlResult);
-                       }
-                    });
-              },
-              search  : function(){$(this).addClass('working');},
-             }); 
-                $(".cls-search-input-sfdc").autocomplete({
+               $(".cls-search-input-sfdc").autocomplete({
                 source : function (request, response) { 
                   queryTerm = request.term;
                     AutoCompleteController.getAutoComplete(queryTerm,'1', function(result, event){
                         if(event.type == 'exception') {
                               console.log('exception>>>>>>>>>>>>'+event.message);
-                        } else {
+                        } else {            
                     var objectArray = result.message.speech;
                     var htmlResult=''; 
+                   console.log(result.message.speech);          
                    console.log(objectArray.length); 
                    var Arraylength = objectArray.length; 
                     if(Arraylength == 20){
@@ -256,8 +205,8 @@ AutoCompleteController.getAutoComplete(queryTerm,numberOfPages, function(result,
                         $(".cls-next-div").show();
                         }else{
                          $(".cls-next-div").hide();   
-                            }
-                   for(var i=0;i<objectArray.length;i++){
+                            }       
+                   for(var i=0;i<objectArray.length;i++){       
                        htmlResult += '<div class="col-sm-4 col-xs-4 col-lg-3" style="display:inline-block;padding: 15px;">'
                      +' <div class="col-sm-12 col-xs-12" style="padding:10px 10px 0;display:inline-block;box-shadow: -2px 2px 5px #d9d9d9;background-color: #fafafa;border: 1px solid #e0e0e0;">'
                          +'<div class="col-sm-12 col-xs-12" style="padding: 0 0 5px;">'
@@ -265,7 +214,7 @@ AutoCompleteController.getAutoComplete(queryTerm,numberOfPages, function(result,
                         +' </div>'
                         +' <div class="col-sm-12 col-xs-12" style="padding:0;">'
                               +'<img class="col-sm-12 col-xs-12" src="'+objectArray[i].thumb_url+'" style="padding:0;height:150px;">'
-                             +'<img class="img-responsive" onclick="searchVideoInfo('+objectArray[i].video_id+','+objectArray[i].speech_id+')" style="cursor: pointer;display:block;position:absolute;left: 50%;top: 50%;transform: translate(-50%,-50%);width: 20%;" src="{!URLFOR($Resource.Assets_SU,"Assets/video_play_btn.png")}"/>'
+                             +'<img class="img-responsive" onclick="searchSpeechVideoInfo('+objectArray[i].speech_id+');" style="cursor: pointer;display:block;position:absolute;left: 50%;top: 50%;transform: translate(-50%,-50%);width: 20%;" src="{!URLFOR($Resource.Assets_SU,"Assets/video_play_btn.png")}"/>'
                           +'</div>'
                           +'<div style="float:left;width:100%;padding:5px 0;">'
                               +'<div style="padding: 0px;float:left;">'
@@ -298,7 +247,72 @@ AutoCompleteController.getAutoComplete(queryTerm,numberOfPages, function(result,
               },
               search  : function(){$(this).addClass('working');},
              });
+               $(".cls-demo-search-input-sfdc").autocomplete({
+                source : function (request, response) { 
+                  queryTerm = request.term;
+                    AutoCompleteController.getAutoCompleteGuidemeTour(queryTerm, function(result, event){
+                        if(event.type == 'exception') {
+                              console.log('exception>>>>>>>>>>>>'+event.message);
+                        } else {
+                     
+                    var objectArray = result.message.tours;
+                    console.log(objectArray);        
+                     var htmlResult='';       
+                   for(var i=0;i<objectArray.length;i++){
+                       htmlResult += '<div class="col-sm-4 col-xs-4 col-lg-3" style="display:inline-block;padding: 15px;">'
+                     +' <div class="col-sm-12 col-xs-12" style="padding:10px 10px 0;display:inline-block;box-shadow: -2px 2px 5px #d9d9d9;background-color: #fafafa;border: 1px solid #e0e0e0;">'
+                         +'<div class="col-sm-12 col-xs-12" style="padding: 0 0 5px;">'
+                                +' <span style="font-size: 13px;font-weight:bold;white-space: nowrap;text-overflow: ellipsis;overflow: hidden;display: block;" class="ng-binding">'+objectArray[i].tour_title+'</span>'
+                        +' </div>'
+                        +' <div class="col-sm-12 col-xs-12" style="padding:0;">'
+                              +'<img class="col-sm-12 col-xs-12" src="'+objectArray[i].tour_image+'" style="padding:0;height:150px;">'
+                             +'<img class="img-responsive" onclick="searchVideoInfoByTourId('+objectArray[i].tour_id+')" style="cursor: pointer;display:block;position:absolute;left: 50%;top: 50%;transform: translate(-50%,-50%);width: 20%;" src="{!URLFOR($Resource.Assets_SU,"Assets/video_play_btn.png")}"/>'
+                          +'</div>'
+                          +'<div style="float:left;width:100%;padding:5px 0;">'
+                              +'<div style="padding: 0px;float:left;">'
+                                 +'<div style="display:inline-block;font-size: 11px;">'
+                                  +'<span class="star" style="color:#0f7be4;"></span>'
+                                  +'<span class="star" style="color:#0f7be4;"></span>'
+                                  +'<span class="star" style="color:#0f7be4;"></span>'
+                                 +' <span class="star" style="color:#0f7be4;"></span>'
+                                  +'<span class="star" style="color:#0f7be4;"></span>'
+                                 +'</div>'
+                              +'</div>'
+                               +'<div style="float:right;padding: 2px;">'
+                                 +' <span style="color:#888888;text-align:right;font-size: 12px;" class="ng-binding"> 0'
+                                     +' <span aria-hidden="true" class="fa fa-commenting-o" style="font-size: 14px;"></span>'
+                                  +'</span>'
+                                  +'<span style="color:#888888;text-align:right;font-size: 12px;">1000 '
+                                     +' <span aria-hidden="true" class="fa fa-eye" style="font-size: 14px;"></span>'
+                                  +'</span>'
+                              +'</div>'
+                          +'</div>'
+                      +'</div>'
+                  +'</div>';
+                     } 
+                      $('.cls-demo-search-input-sfdc').removeClass('working'); 
+                      $('.cls-product-training-div').hide();   
+                       $('.cls-video-list-div').show();     
+                      $('#result').html(htmlResult);
+                       }
+                    });
+              },
+              search  : function(){$(this).addClass('working');},
+             }); 
         });
+    
+function searchSpeechVideoInfo(speech_id){
+    console.log(speech_id);
+    var searchQuery = $(".cls-search-input-sfdc").val();
+    console.log(searchQuery);
+    searchVideoInfo(speech_id,searchQuery);
+    }
+function searchVideoInfoByTourId(tour_id){
+console.log(tour_id);
+var searchQuery = $(".cls-demo-search-input-sfdc").val();  
+console.log(searchQuery);
+searchVideoInfoDemo(tour_id,searchQuery);    
+}    
         function searchOption(){
                 $('.cls-label-search-pop-div').toggle();
             }    

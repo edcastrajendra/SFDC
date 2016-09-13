@@ -216,16 +216,16 @@
                     </div>
                 </div>
              <apex:actionFunction name="searchVideoInfoDemo" action="{!searchVideoInfoDemo}" reRender="resultPanel" status="myStatus">
-            <apex:param name="video_id" assignTo="{!tour_id}" value="" />
-            <apex:param name="category_id" assignTo="{!category_id}" value="" />  
-            </apex:actionFunction> 
-                 <apex:actionFunction name="searchVideoInfo" action="{!searchVideoInfo}" reRender="resultPanel" status="myStatus">
-                  <apex:param name="video_id" assignTo="{!video_id}" value="" />
-                  <apex:param name="speech_id" assignTo="{!speech_id}" value="" />    
-                  </apex:actionFunction>  
-                <apex:actionFunction action="{!getShareVideoList}" name="getShareVideoList" reRender="userJson_result" status="userJson_status"> 
-                    <apex:param name="userJson"  id="userJson" assignTo="{!userJson}"   value=""/> 
-                </apex:actionFunction>    
+             <apex:param name="video_id" assignTo="{!tour_id}" value="" />
+             <apex:param name="searchQuery" assignTo="{!searchQuery}" value="" /> 
+             </apex:actionFunction> 
+             <apex:actionFunction name="searchVideoInfo" action="{!searchVideoInfo}" reRender="resultPanel" status="myStatus">
+             <apex:param name="speech_id" assignTo="{!speech_id}" value="" />   
+             <apex:param name="searchQuery" assignTo="{!searchQuery}" value="" />        
+             </apex:actionFunction>  
+             <apex:actionFunction action="{!getShareVideoList}" name="getShareVideoList" reRender="userJson_result" status="userJson_status"> 
+             <apex:param name="userJson"  id="userJson" assignTo="{!userJson}"   value=""/> 
+             </apex:actionFunction>    
             </apex:form>
         </body>
     </html>
